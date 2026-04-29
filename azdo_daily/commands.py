@@ -315,13 +315,13 @@ def cmd_start(args):
     ui.hdr("New tasks — select to activate")
     ui.print_tasks(new_tasks)
 
-    selected_indices = ui.select_from_list(new_tasks, "Select tasks to start")
-    if not selected_indices:
+    selected_tasks = ui.select_from_list(new_tasks, "Select tasks to start")
+    if not selected_tasks:
         ui.err("No valid selection.")
         return
 
     # Collect unique story IDs from selected tasks
-    selected_task_ids = [new_tasks[i]["id"] for i in selected_indices]
+    selected_task_ids = [t["id"] for t in selected_tasks]
     story_ids = set(task_to_story[tid] for tid in selected_task_ids)
 
     if story_ids:
@@ -393,12 +393,10 @@ def cmd_update(args):
     ui.hdr("Open tasks — select to log progress")
     ui.print_tasks(open_tasks)
 
-    selected_indices = ui.select_from_list(open_tasks, "Select tasks to update")
-    if not selected_indices:
+    selected_tasks = ui.select_from_list(open_tasks, "Select tasks to update")
+    if not selected_tasks:
         ui.err("No valid selection.")
         return
-
-    selected_tasks = [open_tasks[i] for i in selected_indices]
 
     ui.hdr("Log progress for each task (keep open)")
     for task in selected_tasks:
@@ -474,12 +472,10 @@ def cmd_end(args):
     ui.hdr("Open tasks — select to mark as done")
     ui.print_tasks(open_tasks)
 
-    selected_indices = ui.select_from_list(open_tasks, "Select tasks to complete")
-    if not selected_indices:
+    selected_tasks = ui.select_from_list(open_tasks, "Select tasks to complete")
+    if not selected_tasks:
         ui.err("No valid selection.")
         return
-
-    selected_tasks = [open_tasks[i] for i in selected_indices]
     close_state = TaskState.CLOSED.value
 
     ui.hdr(f"Mark tasks as '{close_state}'")
