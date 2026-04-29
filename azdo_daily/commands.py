@@ -110,20 +110,24 @@ def cmd_create(args):
 
     print()
     print("  How do you want to create tasks?")
-    print(f"  {ui.B}1.{ui.R}  AI auto-breakdown from story description")
-    print(f"  {ui.B}2.{ui.R}  Enter tasks manually")
-    print(f"  {ui.B}3.{ui.R}  Both (AI suggestions → review → add/remove)")
+    print(f"  {ui.B}1.{ui.R}  Use template (UI, Logic, Unit Test)")
+    print(f"  {ui.B}2.{ui.R}  AI auto-breakdown from story description")
+    print(f"  {ui.B}3.{ui.R}  Enter tasks manually")
+    print(f"  {ui.B}4.{ui.R}  Template + AI suggestions → review")
     mode = ui.ask("Choose", "1")
 
     proposed_tasks = []
+    templates = cfg.get("task_templates", [])
+    if mode == "1":
+        proposed_tasks = [dict(t) for t in templates]
 
-    if mode in ("1", "3"):
+    if mode in ("2", "4"):
         if not cfg.get("anthropic_api_key"):
             ui.err("anthropic_api_key not set. Run:  azdo-daily configure")
-            if mode == "1":
+            if mode == "2":
                 sys.exit(1)
             ui.warn("Falling back to manual entry.")
-            mode = "2"
+            mode = "3"
         else:
             story_parts = []
             for s in selected:
@@ -135,16 +139,24 @@ def cmd_create(args):
             story_text = "\n\n---\n\n".join(story_parts)
             ui.info("Calling AI breakdown…")
             try:
-                proposed_tasks = ai.ai_breakdown(story_text, cfg["anthropic_api_key"])
-                ui.hdr(f"AI suggested {len(proposed_tasks)} task(s):")
+                ai_tasks = ai.ai_breakdown(story_text, cfg["anthropic_api_key"])
+                if mode == "4":
+                    proposed_tasks.extend(ai_tasks)
+                    ui.hdr(f"Template + AI: {len(proposed_tasks)} task(s):")
+                else:
+                    proposed_tasks = ai_tasks
+                    ui.hdr(f"AI suggested {len(proposed_tasks)} task(s):")
                 ui.print_tasks(proposed_tasks)
             except Exception as e:
                 ui.err(f"AI error: {e}")
-                if mode == "1":
+                if mode == "2":
                     sys.exit(1)
-                proposed_tasks = []
+                if mode == "4":
+                    ui.warn("Keeping template tasks only.")
+                else:
+                    proposed_tasks = []
 
-    if mode in ("2", "3"):
+    if mode in ("3", "4"):
         ui.hdr("Manual task entry  (blank title to stop)")
         prio_map = {"1": 1, "2": 2, "3": 3, "4": 4}
         while True:
@@ -171,7 +183,7 @@ def cmd_create(args):
         sys.exit(0)
 
     # Review & confirm
-    if mode in ("1", "3"):
+    if mode in ("2", "4"):
         ui.hdr("Review tasks before creating")
         ui.print_tasks(proposed_tasks)
         action = ui.ask("(c)onfirm all / (e)dit list / (q)uit", "c").lower()

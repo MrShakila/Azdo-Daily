@@ -17,6 +17,11 @@ DEFAULT_CFG = {
     "anthropic_api_key": "",
     "assigned_to": "",
     "area_path": "",
+    "task_templates": [
+        {"title": "UI", "priority": 2, "effort": None},
+        {"title": "Logic", "priority": 2, "effort": None},
+        {"title": "Unit Test", "priority": 3, "effort": None},
+    ],
 }
 
 
