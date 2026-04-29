@@ -1,6 +1,12 @@
 # Azure DevOps Daily Task Automation
 
-Automate daily task creation, activation, and completion logging in Azure DevOps with AI-powered task breakdown via Claude.
+🤖 Automate daily task creation, activation, and completion logging in Azure DevOps with AI-powered task breakdown via Claude.
+
+- **AI Task Breakdown** — Claude reads user stories and generates concrete development tasks
+- **Interactive Workflow** — `create` → `start` → `update` → `end` pipeline
+- **Auto-linking** — Tasks linked to parent stories, related across multiple stories
+- **Progress Tracking** — Log hours, remaining estimates, completion notes
+- **Global CLI** — Install once, use anywhere: `azdo-daily configure`
 
 ## Installation
 
@@ -185,3 +191,59 @@ Status reminder at 9 AM weekdays:
 ```
 
 > `start`, `update`, and `end` commands are interactive — use cron for `status` only.
+
+---
+
+## Troubleshooting
+
+### "Work item X does not exist"
+
+Task IDs in state file no longer exist in Azure DevOps. Reset today's state:
+
+```bash
+rm ~/.config/azdo_daily/state/2026-04-29.json  # or today's date
+azdo-daily create
+```
+
+### "anthropic_api_key not set"
+
+Run configure and enter Anthropic API key from [console.anthropic.com](https://console.anthropic.com):
+
+```bash
+azdo-daily configure
+```
+
+### "Personal Access Token (PAT) invalid"
+
+Regenerate PAT in Azure DevOps → User Settings → Personal Access Tokens.
+Must have **Work Items (Read & Write)** scope.
+
+### ModuleNotFoundError after install
+
+Reinstall in development mode:
+
+```bash
+pip install -e .
+```
+
+---
+
+## Development
+
+Install with dev tools:
+
+```bash
+pip install -e ".[dev]"
+```
+
+Format code:
+
+```bash
+black azdo_daily/
+```
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE)

@@ -1,27 +1,69 @@
-# Project config with secrets
+# ─── Project-specific ────────────────────────────────────
+# Config with secrets (PAT, API keys)
 .config/
+*.env
+.env.local
 
-# Python
+# Daily state files
+state/
+state/*.json
+
+# ─── Python ───────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
 *.egg-info/
 dist/
 build/
+*.egg
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# IDE
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+
+# ─── IDE & Editors ────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# OS
+# ─── OS ───────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 
-# State files
-state/
+# ─── IDE cache ────────────────────────────────────────────
+.claude/
+*.log
