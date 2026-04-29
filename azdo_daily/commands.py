@@ -67,6 +67,7 @@ def cmd_create(args):
     cfg = config.load_cfg()
     config.require_cfg(cfg, "org", "project", "pat")
     sess = azdo.session(cfg)
+    date_str = args.date
 
     ui.hdr("Fetching your user stories…")
     try:
@@ -95,7 +96,7 @@ def cmd_create(args):
     for s in selected:
         ui.ok(f"#{s['id']}  {s['fields']['System.Title']}")
 
-    st = state.load_state()
+    st = state.load_state(date_str)
     st["stories"] = [
         {"id": s["id"], "title": s["fields"]["System.Title"]} for s in selected
     ]
@@ -267,7 +268,8 @@ def cmd_start(args):
     cfg = config.load_cfg()
     config.require_cfg(cfg, "org", "project", "pat")
     sess = azdo.session(cfg)
-    st = state.load_state()
+    date_str = args.date
+    st = state.load_state(date_str)
 
     tasks = st.get("tasks", [])
     if not tasks:
@@ -331,7 +333,8 @@ def cmd_update(args):
     cfg = config.load_cfg()
     config.require_cfg(cfg, "org", "project", "pat")
     sess = azdo.session(cfg)
-    st = state.load_state()
+    date_str = args.date
+    st = state.load_state(date_str)
 
     tasks = st.get("tasks", [])
     if not tasks:
@@ -393,7 +396,8 @@ def cmd_end(args):
     cfg = config.load_cfg()
     config.require_cfg(cfg, "org", "project", "pat")
     sess = azdo.session(cfg)
-    st = state.load_state()
+    date_str = args.date
+    st = state.load_state(date_str)
 
     tasks = st.get("tasks", [])
     if not tasks:
@@ -481,8 +485,9 @@ def cmd_status(args):
     cfg = config.load_cfg()
     config.require_cfg(cfg, "org", "project", "pat")
     sess = azdo.session(cfg)
+    date_str = args.date or date.today().isoformat()
 
-    ui.hdr(f"Status — {date.today().isoformat()}")
+    ui.hdr(f"Status — {date_str}")
 
     # Fetch stories from API
     ui.info("Fetching stories from Azure DevOps…")

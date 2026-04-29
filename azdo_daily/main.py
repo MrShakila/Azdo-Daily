@@ -41,14 +41,26 @@ workflow:
     )
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("configure", help="Set credentials interactively")
-    sub.add_parser(
+    create_p = sub.add_parser(
         "create",
         help="Pick stories → generate tasks → create in Azure DevOps",
     )
-    sub.add_parser("start", help="Activate tasks (mark as In Progress)")
-    sub.add_parser("update", help="Log progress on tasks (keep open)")
-    sub.add_parser("end", help="Mark tasks as done (auto-resolves story if all done)")
-    sub.add_parser("status", help="Show today's stories and tasks")
+    create_p.add_argument("--date", help="Date for tasks (YYYY-MM-DD, default today)")
+
+    start_p = sub.add_parser("start", help="Activate tasks (mark as In Progress)")
+    start_p.add_argument("--date", help="Date for tasks (YYYY-MM-DD, default today)")
+
+    update_p = sub.add_parser("update", help="Log progress on tasks (keep open)")
+    update_p.add_argument("--date", help="Date for tasks (YYYY-MM-DD, default today)")
+
+    end_p = sub.add_parser(
+        "end", help="Mark tasks as done (auto-resolves story if all done)"
+    )
+    end_p.add_argument("--date", help="Date for tasks (YYYY-MM-DD, default today)")
+
+    status_p = sub.add_parser("status", help="Show today's stories and tasks")
+    status_p.add_argument("--date", help="Date for tasks (YYYY-MM-DD, default today)")
+
     sub.add_parser("reconfigure", help="Reconfigure credentials and settings")
     sub.add_parser("clear-history", help="Clear daily state and task history")
 

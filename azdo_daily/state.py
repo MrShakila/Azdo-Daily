@@ -10,15 +10,17 @@ STATE_DIR = BASE_DIR / "state"
 DEFAULT_STATE = {"stories": [], "tasks": []}
 
 
-def today_file() -> Path:
-    """Get path to today's state file."""
+def today_file(date_str: str = None) -> Path:
+    """Get path to state file for given date (default: today)."""
     STATE_DIR.mkdir(exist_ok=True)
-    return STATE_DIR / f"{date.today().isoformat()}.json"
+    if date_str is None:
+        date_str = date.today().isoformat()
+    return STATE_DIR / f"{date_str}.json"
 
 
-def load_state() -> dict:
-    """Load today's state, defaulting to empty."""
-    f = today_file()
+def load_state(date_str: str = None) -> dict:
+    """Load state for given date (default: today)."""
+    f = today_file(date_str)
     if f.exists():
         try:
             data = json.loads(f.read_text())
@@ -31,6 +33,6 @@ def load_state() -> dict:
     return dict(DEFAULT_STATE)
 
 
-def save_state(st: dict):
-    """Save state to today's file."""
-    today_file().write_text(json.dumps(st, indent=2))
+def save_state(st: dict, date_str: str = None):
+    """Save state for given date (default: today)."""
+    today_file(date_str).write_text(json.dumps(st, indent=2))
