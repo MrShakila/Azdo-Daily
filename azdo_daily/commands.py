@@ -118,8 +118,12 @@ def cmd_create(args):
 
     proposed_tasks = []
     templates = cfg.get("task_templates", [])
-    if mode == "1":
-        proposed_tasks = [dict(t) for t in templates]
+    if mode in ("1", "4"):
+        story_title = selected[0]["fields"]["System.Title"]
+        for t in templates:
+            task = dict(t)
+            task["title"] = f"{t['title']} | {story_title}"
+            proposed_tasks.append(task)
 
     if mode in ("2", "4"):
         if not cfg.get("anthropic_api_key"):
