@@ -82,9 +82,9 @@ def get_task_children(sess: requests.Session, cfg: dict, story_id: int) -> list[
         if rel.get("rel") == "System.LinkTypes.Hierarchy-Forward":
             # Extract ID from relation URL
             url = rel.get("url", "")
-            if "/workitems/" in url:
+            if "/workItems/" in url:
                 try:
-                    child_id = int(url.split("/workitems/")[-1])
+                    child_id = int(url.split("/workItems/")[-1])
                     child_ids.append(child_id)
                 except (ValueError, IndexError):
                     pass
