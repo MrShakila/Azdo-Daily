@@ -452,29 +452,35 @@ def cmd_status(args):
         ui.info("No tasks created yet. Run:  azdo-daily create")
         return
 
-    open_t = [t for t in tasks if not t.get("closed")]
-    closed_t = [t for t in tasks if t.get("closed")]
 
-    if open_t:
-        ui.info(f"Open ({len(open_t)}):")
-        for t in open_t:
-            rem = (
-                f"  {ui.DIM}{t['remaining_hours']}h remaining{ui.R}"
-                if t.get("remaining_hours")
-                else ""
-            )
-            print(f"    {ui.BL}●{ui.R}  #{t['id']}  {t['title']}{rem}")
+def cmd_clear_history(args):
+    """Clear daily state and task history."""
+    ui.hdr("Clear history")
+    ui.warn("This will delete all daily state files (state/*.json)")
 
-    if closed_t:
-        ui.info(f"Resolved ({len(closed_t)}):")
-        for t in closed_t:
-            hrs = (
-                f"  {ui.DIM}{t['completed_hours']}h logged{ui.R}"
-                if t.get("completed_hours")
-                else ""
-            )
-            print(f"    {ui.GR}●{ui.R}  #{t['id']}  {t['title']}{hrs}")
+    confirm = ui.ask("Type 'yes' to confirm", "")
+    if confirm.lower() != "yes":
+        ui.warn("Cancelled.")
+        return
 
-    print()
-    total = len(tasks)
-    print(f"  {ui.DIM}{len(closed_t)}/{total} tasks resolved today{ui.R}\n")
+    try:
+        state_dir = state.STATE_DIR
+        if state_dir.exists():
+            import shutil
+
+            shutil.rmtree(state_dir)
+        ui.ok("History cleared")
+    except Exception as e:
+        ui.err(f"Failed to clear history: {e}")
+
+
+def cmd_reconfigure(args):
+    """Reconfigure credentials and settings."""
+    ui.hdr("Reconfigure azdo-daily")
+
+    confirm = ui.ask("Overwrite existing config? (yes/no)", "no")
+    if confirm.lower() != "yes":
+        ui.warn("Cancelled.")
+        return
+
+    cmd_configure(args)
