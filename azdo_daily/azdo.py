@@ -66,28 +66,42 @@ def get_workitems(sess: requests.Session, cfg: dict, ids: list[int]) -> list[dic
 
 
 def get_task_children(sess: requests.Session, cfg: dict, story_id: int) -> list[dict]:
-    """Fetch non-closed child tasks of a story."""
+    """Fetch non-closed child tasks of a story via REST API relations."""
     base = wit_base(cfg)
-    wiql = {
-        "query": f"""
-            SELECT [System.Id],[System.Title],[System.State],
-                   [Microsoft.VSTS.Common.Priority]
-            FROM WorkItems
-            WHERE [System.Links.Hierarchy-Forward] = {story_id}
-              AND [System.WorkItemType] = 'Task'
-              AND [System.State] NOT IN ('Closed','Removed')
-        """
-    }
-    r = sess.post(
-        f"{base}/wiql?api-version=7.1",
-        json=wiql,
+    # Fetch work item with relations
+    r = sess.get(
+        f"{base}/workitems/{story_id}?api-version=7.1&$expand=relations",
         headers={"Content-Type": "application/json"},
     )
     r.raise_for_status()
-    ids = [str(w["id"]) for w in r.json().get("workItems", [])]
-    if not ids:
+
+    # Extract child task IDs from Hierarchy-Forward relations
+    item = r.json()
+    child_ids = []
+    for rel in item.get("relations", []):
+        if rel.get("rel") == "System.LinkTypes.Hierarchy-Forward":
+            # Extract ID from relation URL
+            url = rel.get("url", "")
+            if "/workitems/" in url:
+                try:
+                    child_id = int(url.split("/workitems/")[-1])
+                    child_ids.append(child_id)
+                except (ValueError, IndexError):
+                    pass
+
+    if not child_ids:
         return []
-    return get_workitems(sess, cfg, [int(id) for id in ids])
+
+    # Fetch details and filter for non-closed Tasks
+    all_items = get_workitems(sess, cfg, child_ids)
+    return [
+        t
+        for t in all_items
+        if (
+            t.get("fields", {}).get("System.WorkItemType") == "Task"
+            and t.get("fields", {}).get("System.State") not in ("Closed", "Removed")
+        )
+    ]
 
 
 def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
