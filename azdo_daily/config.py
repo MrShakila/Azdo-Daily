@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from azdo_daily import ui
+
 BASE_DIR = Path(__file__).parent
 CONFIG_DIR = BASE_DIR / ".config"
 CONFIG_FILE = CONFIG_DIR / "settings.json"
@@ -36,10 +38,8 @@ def save_cfg(cfg: dict):
 
 def require_cfg(cfg: dict, *keys: str):
     """Exit if any required config keys are missing."""
-    from azdo_daily.ui import err, info
-
     missing = [k for k in keys if not cfg.get(k)]
     if missing:
-        err(f"Missing config: {', '.join(missing)}")
-        info("Run:  python main.py configure")
+        ui.err(f"Missing config: {', '.join(missing)}")
+        ui.info("Run:  azdo-daily configure")
         sys.exit(1)
