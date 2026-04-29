@@ -81,43 +81,45 @@ def refresh_task_status(sess: requests.Session, cfg: dict, task_ids: list[int]) 
     }
 
 
-def get_task_children(sess: requests.Session, cfg: dict, story_id: int) -> list[dict]:
-    """Fetch non-closed child tasks of a story via REST API relations."""
+_DONE_STATES = ("Closed", "Resolved", "Removed")
+
+
+def get_task_children(
+    sess: requests.Session, cfg: dict, story_id: int, active_only: bool = True
+) -> list[dict]:
+    """Fetch child tasks of a story. active_only=True skips Closed/Resolved/Removed."""
     base = wit_base(cfg)
-    # Fetch work item with relations
     r = sess.get(
         f"{base}/workitems/{story_id}?api-version=7.1&$expand=relations",
         headers={"Content-Type": "application/json"},
     )
     r.raise_for_status()
 
-    # Extract child task IDs from Hierarchy-Forward relations
     item = r.json()
     child_ids = []
     for rel in item.get("relations", []):
         if rel.get("rel") == "System.LinkTypes.Hierarchy-Forward":
-            # Extract ID from relation URL
             url = rel.get("url", "")
             if "/workItems/" in url:
                 try:
-                    child_id = int(url.split("/workItems/")[-1])
-                    child_ids.append(child_id)
+                    child_ids.append(int(url.split("/workItems/")[-1]))
                 except (ValueError, IndexError):
                     pass
 
     if not child_ids:
         return []
 
-    # Fetch details and filter for non-closed Tasks
     all_items = get_workitems(sess, cfg, child_ids)
-    return [
-        t
-        for t in all_items
-        if (
-            t.get("fields", {}).get("System.WorkItemType") == "Task"
-            and t.get("fields", {}).get("System.State") not in ("Closed", "Removed")
-        )
+    tasks = [
+        t for t in all_items if t.get("fields", {}).get("System.WorkItemType") == "Task"
     ]
+    if active_only:
+        tasks = [
+            t
+            for t in tasks
+            if t.get("fields", {}).get("System.State") not in _DONE_STATES
+        ]
+    return tasks
 
 
 def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:

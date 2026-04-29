@@ -557,12 +557,15 @@ def cmd_status(args):
         print(f"    {ui.CY}#{s['id']}{ui.R}  {s['fields']['System.Title']}")
     print()
 
-    # Fetch all child tasks from stories
-    all_tasks = []
+    # Fetch all child tasks from stories (include done to show totals)
+    open_tasks = []
+    total_task_count = 0
     for s in stories:
         try:
-            tasks = azdo.get_task_children(sess, cfg, s["id"])
-            all_tasks.extend(tasks)
+            all_children = azdo.get_task_children(sess, cfg, s["id"], active_only=False)
+            total_task_count += len(all_children)
+            open_children = azdo.get_task_children(sess, cfg, s["id"], active_only=True)
+            open_tasks.extend(open_children)
         except requests.HTTPError as e:
             error_detail = ""
             try:
@@ -575,9 +578,16 @@ def cmd_status(args):
                 f"{e.response.status_code} {error_detail}"
             )
 
-    if not all_tasks:
+    if total_task_count == 0:
         ui.info("No tasks found for active stories.")
         return
+
+    if not open_tasks:
+        done_c = total_task_count
+        ui.ok(f"All {done_c} task(s) done for active stories.")
+        return
+
+    all_tasks = open_tasks
 
     # Format tasks for display with type
     display_tasks = []
