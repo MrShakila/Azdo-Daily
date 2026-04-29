@@ -65,6 +65,32 @@ def get_workitems(sess: requests.Session, cfg: dict, ids: list[int]) -> list[dic
     return r.json().get("value", [])
 
 
+def get_task_children(sess: requests.Session, cfg: dict, story_id: int) -> list[dict]:
+    """Fetch child tasks (Task type) of a story."""
+    base = wit_base(cfg)
+    wiql = {
+        "query": f"""
+            SELECT [System.Id],[System.Title],[System.State],
+                   [Microsoft.VSTS.Common.Priority]
+            FROM WorkItemLinks
+            WHERE [Source].[System.Id] = {story_id}
+              AND [System.Links.Link Type] = 'System.LinkTypes.Hierarchy-Forward'
+              AND [Target].[System.WorkItemType] = 'Task'
+            MODE (Recursive)
+        """
+    }
+    r = sess.post(
+        f"{base}/wiql?api-version=7.1",
+        json=wiql,
+        headers={"Content-Type": "application/json"},
+    )
+    r.raise_for_status()
+    ids = [str(w["id"]) for w in r.json().get("workItems", [])]
+    if not ids:
+        return []
+    return get_workitems(sess, cfg, [int(id) for id in ids])
+
+
 def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
     """WIQL query: active User Stories assigned to me."""
     assignee = cfg.get("assigned_to") or "@Me"

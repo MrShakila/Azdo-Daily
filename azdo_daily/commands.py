@@ -460,43 +460,40 @@ def cmd_status(args):
         print(f"    {ui.CY}#{s['id']}{ui.R}  {s['fields']['System.Title']}")
     print()
 
-    # Load local state for reference
-    st = state.load_state()
-    tasks = st.get("tasks", [])
+    # Fetch all child tasks from stories
+    all_tasks = []
+    for s in stories:
+        try:
+            tasks = azdo.get_task_children(sess, cfg, s["id"])
+            all_tasks.extend(tasks)
+        except requests.HTTPError as e:
+            ui.warn(
+                f"Failed to fetch tasks for story #{s['id']}: {e.response.status_code}"
+            )
 
-    if not tasks:
-        ui.info(
-            "No tasks in today's local state. "
-            "Run 'azdo-daily create' to generate tasks."
+    if not all_tasks:
+        ui.info("No tasks found for active stories.")
+        return
+
+    # Format tasks for display
+    display_tasks = []
+    for t in all_tasks:
+        state_val = t.get("fields", {}).get("System.State", "")
+        display_tasks.append(
+            {
+                "id": t["id"],
+                "title": t["fields"].get("System.Title", ""),
+                "closed": state_val.lower() == "closed",
+            }
         )
-        return
 
-    # Fetch task details from API
-    task_ids = [t["id"] for t in tasks]
-    try:
-        api_tasks = azdo.get_workitems(sess, cfg, task_ids)
-    except requests.HTTPError as e:
-        ui.err(f"Failed to fetch task details: {e.response.status_code}")
-        return
-
-    # Map API tasks by ID for easy lookup
-    api_map = {t["id"]: t for t in api_tasks}
-
-    # Update local tasks with current API state
-    for t in tasks:
-        if t["id"] in api_map:
-            api_t = api_map[t["id"]]
-            state_val = api_t.get("fields", {}).get("System.State", "")
-            t["closed"] = state_val.lower() == "closed"
-
-    # Display tasks
-    ui.print_tasks(tasks)
+    ui.print_tasks(display_tasks)
 
     # Summary
-    closed_c = sum(1 for t in tasks if t.get("closed"))
-    open_c = sum(1 for t in tasks if not t.get("closed"))
+    closed_c = sum(1 for t in display_tasks if t.get("closed"))
+    open_c = sum(1 for t in display_tasks if not t.get("closed"))
     print()
-    ui.info(f"Today: {closed_c} resolved  /  {open_c} still open")
+    ui.info(f"Total: {closed_c} resolved  /  {open_c} still open")
 
 
 def cmd_clear_history(args):
