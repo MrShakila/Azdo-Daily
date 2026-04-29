@@ -36,23 +36,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
-
-      - name: Send email notification
-        if: success()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.SMTP_SERVER }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-          subject: "azdo-daily v${{ github.ref_name }} published to PyPI"
-          to: ${{ secrets.NOTIFY_EMAIL }}
-          from: ${{ secrets.SMTP_USERNAME }}
-          body: |
-            Release ${{ github.ref_name }} successfully published to PyPI!
-
-            Repository: ${{ github.repository }}
-            Commit: ${{ github.sha }}
-
-            Install with: pip install azdo-daily
-            View on PyPI: https://pypi.org/project/azdo-daily/
