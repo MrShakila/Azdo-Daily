@@ -72,12 +72,10 @@ def get_task_children(sess: requests.Session, cfg: dict, story_id: int) -> list[
         "query": f"""
             SELECT [System.Id],[System.Title],[System.State],
                    [Microsoft.VSTS.Common.Priority]
-            FROM WorkItemLinks
-            WHERE [Source].[System.Id] = {story_id}
-              AND [System.Links.Link Type] = 'System.LinkTypes.Hierarchy-Forward'
-              AND [Target].[System.WorkItemType] = 'Task'
-              AND [Target].[System.State] <> 'Closed'
-            MODE (Recursive)
+            FROM WorkItems
+            WHERE [System.Links.Hierarchy-Forward] = {story_id}
+              AND [System.WorkItemType] = 'Task'
+              AND [System.State] NOT IN ('Closed','Removed')
         """
     }
     r = sess.post(

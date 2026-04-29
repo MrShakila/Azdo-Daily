@@ -467,8 +467,15 @@ def cmd_status(args):
             tasks = azdo.get_task_children(sess, cfg, s["id"])
             all_tasks.extend(tasks)
         except requests.HTTPError as e:
+            error_detail = ""
+            try:
+                resp_json = e.response.json()
+                error_detail = resp_json.get("message", "")
+            except Exception:
+                error_detail = e.response.text[:200]
             ui.warn(
-                f"Failed to fetch tasks for story #{s['id']}: {e.response.status_code}"
+                f"Failed to fetch tasks for story #{s['id']}: "
+                f"{e.response.status_code} {error_detail}"
             )
 
     if not all_tasks:
