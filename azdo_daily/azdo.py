@@ -49,6 +49,22 @@ def set_workitem_state(sess: requests.Session, cfg: dict, item_id: int, state: s
     _patch_workitem(sess, cfg, item_id, ops)
 
 
+def get_workitems(sess: requests.Session, cfg: dict, ids: list[int]) -> list[dict]:
+    """Fetch work item details by IDs."""
+    if not ids:
+        return []
+    base = wit_base(cfg)
+    r = sess.get(
+        f"{base}/workitems?ids={','.join(map(str, ids))}"
+        "&fields=System.Id,System.Title,System.State,"
+        "Microsoft.VSTS.Common.Priority,System.AreaPath"
+        "&api-version=7.1",
+        headers={"Content-Type": "application/json"},
+    )
+    r.raise_for_status()
+    return r.json().get("value", [])
+
+
 def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
     """WIQL query: active User Stories assigned to me."""
     assignee = cfg.get("assigned_to") or "@Me"

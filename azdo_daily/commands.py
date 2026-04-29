@@ -434,23 +434,69 @@ def cmd_end(args):
 
 
 def cmd_status(args):
-    """Show today's stories and tasks."""
+    """Show today's stories and tasks from Azure DevOps API."""
     from datetime import date
 
-    st = state.load_state()
+    cfg = config.load_cfg()
+    config.require_cfg(cfg, "org", "project", "pat")
+    sess = azdo.session(cfg)
+
     ui.hdr(f"Status — {date.today().isoformat()}")
 
-    stories = st.get("stories", [])
-    if stories:
-        ui.info("Active stories:")
-        for s in stories:
-            print(f"    {ui.CY}#{s['id']}{ui.R}  {s['title']}")
-        print()
-
-    tasks = st.get("tasks", [])
-    if not tasks:
-        ui.info("No tasks created yet. Run:  azdo-daily create")
+    # Fetch stories from API
+    ui.info("Fetching stories from Azure DevOps…")
+    try:
+        stories = azdo.get_my_stories(sess, cfg)
+    except requests.HTTPError as e:
+        ui.err(f"Azure DevOps error: {e.response.status_code}")
         return
+
+    if not stories:
+        ui.warn("No active user stories assigned to you.")
+        return
+
+    ui.info(f"Active stories ({len(stories)}):")
+    for s in stories:
+        print(f"    {ui.CY}#{s['id']}{ui.R}  {s['fields']['System.Title']}")
+    print()
+
+    # Load local state for reference
+    st = state.load_state()
+    tasks = st.get("tasks", [])
+
+    if not tasks:
+        ui.info(
+            "No tasks in today's local state. "
+            "Run 'azdo-daily create' to generate tasks."
+        )
+        return
+
+    # Fetch task details from API
+    task_ids = [t["id"] for t in tasks]
+    try:
+        api_tasks = azdo.get_workitems(sess, cfg, task_ids)
+    except requests.HTTPError as e:
+        ui.err(f"Failed to fetch task details: {e.response.status_code}")
+        return
+
+    # Map API tasks by ID for easy lookup
+    api_map = {t["id"]: t for t in api_tasks}
+
+    # Update local tasks with current API state
+    for t in tasks:
+        if t["id"] in api_map:
+            api_t = api_map[t["id"]]
+            state_val = api_t.get("fields", {}).get("System.State", "")
+            t["closed"] = state_val.lower() == "closed"
+
+    # Display tasks
+    ui.print_tasks(tasks)
+
+    # Summary
+    closed_c = sum(1 for t in tasks if t.get("closed"))
+    open_c = sum(1 for t in tasks if not t.get("closed"))
+    print()
+    ui.info(f"Today: {closed_c} resolved  /  {open_c} still open")
 
 
 def cmd_clear_history(args):
