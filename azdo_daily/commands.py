@@ -350,34 +350,55 @@ def cmd_update(args):
     cfg = config.load_cfg()
     config.require_cfg(cfg, "org", "project", "pat")
     sess = azdo.session(cfg)
-    date_str = args.date
-    st = state.load_state(date_str)
 
-    tasks = st.get("tasks", [])
-    if not tasks:
-        ui.warn("No tasks for today.")
+    # Fetch stories from API
+    ui.info("Fetching stories from Azure DevOps…")
+    try:
+        stories = azdo.get_my_stories(sess, cfg)
+    except requests.HTTPError as e:
+        ui.err(f"Azure DevOps error: {e.response.status_code}")
         return
 
-    # Fetch fresh status from API
-    task_ids = [t["id"] for t in tasks]
-    api_status = azdo.refresh_task_status(sess, cfg, task_ids)
+    if not stories:
+        ui.warn("No active user stories assigned to you.")
+        return
 
-    # Filter for non-closed tasks
+    # Fetch all child tasks from stories
+    all_tasks = []
+    for s in stories:
+        try:
+            tasks = azdo.get_task_children(sess, cfg, s["id"])
+            all_tasks.extend(tasks)
+        except requests.HTTPError:
+            pass
+
+    if not all_tasks:
+        ui.warn("No tasks found for active stories.")
+        return
+
+    # Format tasks for display (all non-closed tasks are available to update)
     open_tasks = [
-        t for t in tasks if api_status.get(t["id"], {}).get("closed") is False
+        {
+            "id": t["id"],
+            "title": f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
+            f"{t['fields'].get('System.Title', '')}",
+        }
+        for t in all_tasks
     ]
 
     if not open_tasks:
-        ui.warn("No open tasks for today.")
+        ui.warn("No open tasks for active stories.")
         return
 
     ui.hdr("Open tasks — select to log progress")
     ui.print_tasks(open_tasks)
 
-    selected_tasks = ui.select_from_list(open_tasks, "Select tasks to update")
-    if not selected_tasks:
+    selected_indices = ui.select_from_list(open_tasks, "Select tasks to update")
+    if not selected_indices:
         ui.err("No valid selection.")
         return
+
+    selected_tasks = [open_tasks[i] for i in selected_indices]
 
     ui.hdr("Log progress for each task (keep open)")
     for task in selected_tasks:
@@ -397,9 +418,6 @@ def cmd_update(args):
             azdo.partial_task(
                 sess, cfg, task["id"], completed_hours, remaining_hours, comment
             )
-            task["remaining_hours"] = remaining_hours
-            task["completed_hours"] = completed_hours
-            state.save_state(st)
             ui.ok(f"Updated (In Progress) — {remaining_hours or '?'}h remaining")
         except requests.HTTPError as e:
             ui.err(f"#{task['id']} — {e.response.status_code}: {e.response.text[:120]}")
@@ -413,86 +431,79 @@ def cmd_end(args):
     cfg = config.load_cfg()
     config.require_cfg(cfg, "org", "project", "pat")
     sess = azdo.session(cfg)
-    date_str = args.date
-    st = state.load_state(date_str)
 
-    tasks = st.get("tasks", [])
-    if not tasks:
-        ui.warn("No tasks for today.")
+    # Fetch stories from API
+    ui.info("Fetching stories from Azure DevOps…")
+    try:
+        stories = azdo.get_my_stories(sess, cfg)
+    except requests.HTTPError as e:
+        ui.err(f"Azure DevOps error: {e.response.status_code}")
         return
 
-    # Fetch fresh status from API
-    task_ids = [t["id"] for t in tasks]
-    api_status = azdo.refresh_task_status(sess, cfg, task_ids)
+    if not stories:
+        ui.warn("No active user stories assigned to you.")
+        return
 
-    # Filter for non-closed tasks
+    # Fetch all child tasks from stories
+    all_tasks = []
+    for s in stories:
+        try:
+            tasks = azdo.get_task_children(sess, cfg, s["id"])
+            all_tasks.extend(tasks)
+        except requests.HTTPError:
+            pass
+
+    if not all_tasks:
+        ui.warn("No tasks found for active stories.")
+        return
+
+    # Format tasks for display (all non-closed tasks are available to complete)
     open_tasks = [
-        t for t in tasks if api_status.get(t["id"], {}).get("closed") is False
+        {
+            "id": t["id"],
+            "title": f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
+            f"{t['fields'].get('System.Title', '')}",
+        }
+        for t in all_tasks
     ]
 
     if not open_tasks:
-        ui.warn("No open tasks for today.")
+        ui.warn("No open tasks for active stories.")
         return
 
     ui.hdr("Open tasks — select to mark as done")
     ui.print_tasks(open_tasks)
 
-    selected_tasks = ui.select_from_list(open_tasks, "Select tasks to complete")
-    if not selected_tasks:
+    selected_indices = ui.select_from_list(open_tasks, "Select tasks to complete")
+    if not selected_indices:
         ui.err("No valid selection.")
         return
 
+    selected_tasks = [open_tasks[i] for i in selected_indices]
     close_state = TaskState.CLOSED.value
-    closed_story_ids = set()
 
     ui.hdr(f"Mark tasks as '{close_state}'")
     for task in selected_tasks:
         print(f"\n  {ui.B}#{task['id']}{ui.R}  {task['title']}")
         ui.sep()
 
-        hours_raw = ui.ask("Hours spent today (optional)")
+        hours_raw = ui.ask("Hours spent (optional)")
         completed_hours = ui.float_or_none(hours_raw)
 
-        note = ui.ask("Any closing note? (optional)")
+        note = ui.ask("Closing note (optional)")
         comment = note if note else None
 
         try:
             azdo.resolve_task(
                 sess, cfg, task["id"], close_state, completed_hours, comment
             )
-            task["closed"] = True
-            task["completed_hours"] = completed_hours
-
-            story_ids = task.get("story_ids", [])
-            for sid in story_ids:
-                all_story_tasks = [
-                    t for t in st.get("tasks", []) if sid in t.get("story_ids", [])
-                ]
-                if all(t.get("closed") for t in all_story_tasks):
-                    closed_story_ids.add(sid)
-
-            state.save_state(st)
             ui.ok(f"Marked as '{close_state}'")
         except requests.HTTPError as e:
             ui.err(f"#{task['id']} — {e.response.status_code}")
             ui.err(f"  {e.response.text}")
 
-    if closed_story_ids:
-        ui.hdr("Auto-resolving completed stories…")
-        for story_id in closed_story_ids:
-            try:
-                azdo.set_workitem_state(sess, cfg, story_id, close_state)
-                ui.ok(f"Story #{story_id} marked as '{close_state}'")
-            except requests.HTTPError as e:
-                msg = f"Story #{story_id} — {e.response.status_code}: "
-                msg += e.response.text[:120]
-                ui.err(msg)
-
-    all_tasks = st.get("tasks", [])
-    closed_c = sum(1 for t in all_tasks if t.get("closed"))
-    open_c = sum(1 for t in all_tasks if not t.get("closed"))
     print()
-    ui.info(f"Today: {closed_c} resolved  /  {open_c} still open")
+    ui.info(f"Tasks marked as '{close_state}'.")
 
 
 def cmd_status(args):
