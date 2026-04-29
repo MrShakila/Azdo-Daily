@@ -56,7 +56,7 @@ def get_workitems(sess: requests.Session, cfg: dict, ids: list[int]) -> list[dic
     base = wit_base(cfg)
     r = sess.get(
         f"{base}/workitems?ids={','.join(map(str, ids))}"
-        "&fields=System.Id,System.Title,System.State,"
+        "&fields=System.Id,System.Title,System.State,System.WorkItemType,"
         "Microsoft.VSTS.Common.Priority,System.AreaPath"
         "&api-version=7.1",
         headers={"Content-Type": "application/json"},
@@ -66,7 +66,7 @@ def get_workitems(sess: requests.Session, cfg: dict, ids: list[int]) -> list[dic
 
 
 def get_task_children(sess: requests.Session, cfg: dict, story_id: int) -> list[dict]:
-    """Fetch child tasks (Task type) of a story."""
+    """Fetch non-closed child tasks of a story."""
     base = wit_base(cfg)
     wiql = {
         "query": f"""
@@ -76,6 +76,7 @@ def get_task_children(sess: requests.Session, cfg: dict, story_id: int) -> list[
             WHERE [Source].[System.Id] = {story_id}
               AND [System.Links.Link Type] = 'System.LinkTypes.Hierarchy-Forward'
               AND [Target].[System.WorkItemType] = 'Task'
+              AND [Target].[System.State] <> 'Closed'
             MODE (Recursive)
         """
     }

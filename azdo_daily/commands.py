@@ -475,14 +475,16 @@ def cmd_status(args):
         ui.info("No tasks found for active stories.")
         return
 
-    # Format tasks for display
+    # Format tasks for display with type
     display_tasks = []
     for t in all_tasks:
         state_val = t.get("fields", {}).get("System.State", "")
+        task_type = t.get("fields", {}).get("System.WorkItemType", "Task")
+        title = t["fields"].get("System.Title", "")
         display_tasks.append(
             {
                 "id": t["id"],
-                "title": t["fields"].get("System.Title", ""),
+                "title": f"[{task_type}] {title}",
                 "closed": state_val.lower() == "closed",
             }
         )
