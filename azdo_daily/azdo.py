@@ -207,7 +207,6 @@ def partial_task(
     comment: Optional[str],
 ):
     """Mark task In Progress with work-log update."""
-
     # Use 'replace' if field exists, 'add' if new
     ops = [{"op": "add", "path": "/fields/System.State", "value": "Active"}]
     if completed_hours is not None:
