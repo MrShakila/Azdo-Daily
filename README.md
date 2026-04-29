@@ -1,6 +1,10 @@
 # Azure DevOps Daily Task Automation
 
-🤖 Automate daily task creation, activation, and completion logging in Azure DevOps with AI-powered task breakdown via Claude.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![PyPI](https://img.shields.io/badge/pypi-azdo--daily-blue.svg)](https://pypi.org/project/azdo-daily/)
+
+Python CLI for automating daily task creation, activation, and completion logging in Azure DevOps with AI-powered task breakdown via Claude.
 
 - **AI Task Breakdown** — Claude reads user stories and generates concrete development tasks
 - **Interactive Workflow** — `create` → `start` → `update` → `end` pipeline
@@ -10,19 +14,37 @@
 
 ## Installation
 
-Install globally from this repository:
+### From PyPI (recommended)
 
 ```bash
+pip install azdo-daily
+azdo-daily configure
+```
+
+### From source
+
+Clone repository:
+
+```bash
+git clone https://github.com/MrShakila/Azdo-Daily.git
+cd Azdo-Daily
 pip install .
 ```
 
 Or install in development mode:
 
 ```bash
-pip install -e .
+pip install -e ".[dev]"
 ```
 
-Then use from anywhere:
+### Requirements
+
+- Python 3.9+
+- `requests` library (auto-installed)
+- Anthropic API key (for AI task breakdown)
+- Azure DevOps Personal Access Token (PAT)
+
+Use from anywhere:
 
 ```bash
 azdo-daily configure
@@ -236,11 +258,26 @@ Install with dev tools:
 pip install -e ".[dev]"
 ```
 
-Format code:
+Install pre-commit hooks:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Format code (auto-runs on commit via pre-commit):
 
 ```bash
 black azdo_daily/
 ```
+
+Lint code:
+
+```bash
+flake8 azdo_daily/
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full development guide.
 
 ---
 
