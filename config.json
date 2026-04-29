@@ -1,8 +1,9 @@
 {
   "org": "shadikari",
-  "project": "Vehicle-Wallet",
+  "project": "Test",
   "pat": "3aAzKyUEWa0cSujG1QHzZrRV4mnxot9VJLJuvhwTmRmjkpC4g5eWJQQJ99CDACAAAAAAAAAAAAASAZDO2quY",
+  "anthropic_api_key": "",
   "assigned_to": "shadikari012@gmail.com",
   "area_path": "",
-  "close_state": "Resolved"
+  "close_state": "Completed"
 }
