@@ -20,10 +20,14 @@ def load_state() -> dict:
     """Load today's state, defaulting to empty."""
     f = today_file()
     if f.exists():
-        data = json.loads(f.read_text())
-        if isinstance(data, list):
-            return {**DEFAULT_STATE, "tasks": data}
-        return {**DEFAULT_STATE, **data}
+        try:
+            data = json.loads(f.read_text())
+            if isinstance(data, list):
+                return {**DEFAULT_STATE, "tasks": data}
+            return {**DEFAULT_STATE, **data}
+        except (json.JSONDecodeError, ValueError):
+            # Malformed JSON, return empty state
+            return dict(DEFAULT_STATE)
     return dict(DEFAULT_STATE)
 
 
