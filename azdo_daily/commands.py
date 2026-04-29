@@ -227,19 +227,28 @@ def cmd_create(args):
     # Create tasks in Azure DevOps
     ui.hdr(f"Creating {len(proposed_tasks)} task(s) in Azure DevOps…")
     created = []
+    story_titles = [s["fields"]["System.Title"] for s in selected]
     for task in proposed_tasks:
         try:
             item = azdo.create_task(sess, cfg, task, selected_ids)
+            task_url = item.get("_links", {}).get("html", {}).get("href", "")
             entry = {
                 "id": item["id"],
                 "title": task["title"],
-                "url": item.get("_links", {}).get("html", {}).get("href", ""),
+                "url": task_url,
                 "closed": False,
                 "story_ids": selected_ids,
             }
             created.append(entry)
             linked = " + ".join(f"#{sid}" for sid in selected_ids)
-            ui.ok(f"#{item['id']}  {task['title']}  {ui.DIM}→ linked to {linked}{ui.R}")
+            story_str = (
+                " | ".join(story_titles) if len(story_titles) > 1 else story_titles[0]
+            )
+            print(f"{ui.B}#{item['id']}{ui.R}  {task['title']}")
+            print(f"  {ui.DIM}Story: {story_str}{ui.R}")
+            if task_url:
+                print(f"  {ui.DIM}{task_url}{ui.R}")
+            print(f"  {ui.DIM}→ linked to {linked}{ui.R}")
         except requests.HTTPError as e:
             ui.err(
                 f"{task['title']} — {e.response.status_code}: {e.response.text[:120]}"
