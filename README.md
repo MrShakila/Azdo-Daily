@@ -134,11 +134,13 @@ azdo-daily create
 1. Fetches all active User Stories assigned to you
 2. You select stories to work on (e.g. `1` or `1,3` or `2-4`)
 3. Choose task creation method:
+   - **Use template** — Auto-generate standard tasks (UI, Logic, Unit Test)
    - **AI auto-breakdown** — Claude reads story and generates tasks
-   - **Manual entry** — type tasks yourself
-   - **Both** — AI suggests, you review/add/remove
+   - **Manual entry** — Type tasks yourself
+   - **Template + AI** — Generate template tasks + AI suggestions, then review
 4. If multiple stories: tasks created once, linked to all (child of #1, related to rest)
-5. Tasks appear in Azure DevOps immediately
+5. Task names include story title (e.g., "UI | My Story Title")
+6. Tasks appear in Azure DevOps immediately with direct links
 
 ### Activate tasks
 
@@ -175,6 +177,26 @@ azdo-daily end
 3. For each: enter hours spent + optional closing note
 4. Task marked done + hours logged
 5. If all tasks for a story are done → story auto-resolved
+
+---
+
+## Maintenance Commands
+
+### Reconfigure credentials
+
+```bash
+azdo-daily reconfigure
+```
+
+Update your Azure DevOps org, project, PAT, or Anthropic API key. Prompts to confirm before overwriting.
+
+### Clear task history
+
+```bash
+azdo-daily clear-history
+```
+
+Delete all daily state files (`state/*.json`). Keeps configuration. Useful for starting fresh after month/week.
 
 ---
 
