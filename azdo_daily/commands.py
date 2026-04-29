@@ -134,7 +134,7 @@ def cmd_create(args):
 
     if mode in ("1", "3"):
         if not cfg.get("anthropic_api_key"):
-            ui.err("anthropic_api_key not set. Run:  python main.py configure")
+            ui.err("anthropic_api_key not set. Run:  azdo-daily configure")
             if mode == "1":
                 sys.exit(1)
             ui.warn("Falling back to manual entry.")
