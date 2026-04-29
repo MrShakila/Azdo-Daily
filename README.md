@@ -1,13 +1,39 @@
 # Azure DevOps Daily Task Automation
 
-## Setup
+Automate daily task creation, activation, and completion logging in Azure DevOps with AI-powered task breakdown via Claude.
+
+## Installation
+
+Install globally from this repository:
 
 ```bash
-pip install -r requirements.txt
-python main.py configure
+pip install .
 ```
 
-You'll be prompted for:
+Or install in development mode:
+
+```bash
+pip install -e .
+```
+
+Then use from anywhere:
+
+```bash
+azdo-daily configure
+azdo-daily status
+```
+
+## Configuration
+
+On first run, configure your settings:
+
+```bash
+azdo-daily configure
+```
+
+Configuration stored in `.config/settings.json` (project-local, excluded from git).
+
+Interactive prompts for:
 | Field | Description |
 |---|---|
 | `org` | Your Azure DevOps organisation name |
@@ -68,15 +94,13 @@ azdo_daily/
 ### Setup (once)
 
 ```bash
-python main.py configure
+azdo-daily configure
 ```
-
-Interactive prompts for org, project, PAT, and Anthropic API key.
 
 ### Morning — Create tasks
 
 ```bash
-python main.py create
+azdo-daily create
 ```
 
 1. Fetches all active User Stories assigned to you
@@ -91,7 +115,7 @@ python main.py create
 ### Activate tasks
 
 ```bash
-python main.py start
+azdo-daily start
 ```
 
 Marks selected new tasks as "In Progress" and auto-activates linked stories.
@@ -99,7 +123,7 @@ Marks selected new tasks as "In Progress" and auto-activates linked stories.
 ### Anytime — Check status
 
 ```bash
-python main.py status
+azdo-daily status
 ```
 
 Shows active stories and all tasks with open/resolved counts.
@@ -107,7 +131,7 @@ Shows active stories and all tasks with open/resolved counts.
 ### Throughout day — Log progress (optional)
 
 ```bash
-python main.py update
+azdo-daily update
 ```
 
 Log hours spent and remaining estimates on open tasks (keeps them "In Progress").
@@ -115,7 +139,7 @@ Log hours spent and remaining estimates on open tasks (keeps them "In Progress")
 ### Evening — Mark complete
 
 ```bash
-python main.py end
+azdo-daily end
 ```
 
 1. Lists all open tasks for today
@@ -157,7 +181,7 @@ Each day's data in `state/YYYY-MM-DD.json`:
 Status reminder at 9 AM weekdays:
 
 ```cron
-0 9 * * 1-5 cd /path/to/azdo_daily && python main.py status
+0 9 * * 1-5 azdo-daily status
 ```
 
 > `start`, `update`, and `end` commands are interactive — use cron for `status` only.

@@ -7,7 +7,10 @@
       "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
       "Bash(python3 -c \"import main; print\\('✓ imports OK'\\)\")",
       "Bash(python3 main.py --help)",
-      "Bash(awk '{print $9, $5}')"
+      "Bash(awk '{print $9, $5}')",
+      "Bash(python3 -c \"from config import load_cfg; cfg = load_cfg\\(\\); print\\(f'✓ Config loaded from .config/settings.json'\\); print\\(f'  org: {cfg.get\\(\\\\\"org\\\\\"\\)}'\\); print\\(f'  project: {cfg.get\\(\\\\\"project\\\\\"\\)}'\\)\")",
+      "Bash(pip install *)",
+      "Bash(azdo-daily --help)"
     ]
   }
 }
