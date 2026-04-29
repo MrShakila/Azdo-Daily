@@ -3,7 +3,6 @@
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 from azdo_daily import ui
 
@@ -18,7 +17,6 @@ DEFAULT_CFG = {
     "anthropic_api_key": "",
     "assigned_to": "",
     "area_path": "",
-    "close_state": "Closed",
 }
 
 

@@ -1,9 +1,7 @@
 """CLI command implementations."""
 
-import json
 import sys
 from enum import Enum
-from typing import Optional
 
 import requests
 
@@ -30,7 +28,7 @@ class StoryState(Enum):
 TASK_STATE_DESCS = {
     TaskState.NEW: "Not started",
     TaskState.ACTIVE: "In progress",
-    TaskState.CLOSED: "Cancelled",
+    TaskState.CLOSED: "Completed",
 }
 
 STORY_STATE_DESCS = {
@@ -59,19 +57,6 @@ def cmd_configure(args):
         val = ui.ask(label, show if show else None)
         if val and val != "****":
             cfg[key] = val
-
-    print()
-    ui.hdr("Select task completion state")
-    print(f"  {ui.B}Valid states:{ui.R}")
-    state_list = list(TaskState)
-    for i, st in enumerate(state_list, 1):
-        desc = TASK_STATE_DESCS.get(st, "")
-        print(f"    {i}. {st.value:15} — {desc}")
-    state_num = ui.ask("Select state number", "3")
-    if state_num.isdigit():
-        idx = int(state_num) - 1
-        if 0 <= idx < len(state_list):
-            cfg["close_state"] = state_list[idx].value
 
     config.save_cfg(cfg)
     ui.ok(f"Saved to {config.CONFIG_FILE}")
@@ -124,7 +109,7 @@ def cmd_create(args):
         ui.info("Tasks will be created once and linked to all selected stories.")
 
     print()
-    print(f"  How do you want to create tasks?")
+    print("  How do you want to create tasks?")
     print(f"  {ui.B}1.{ui.R}  AI auto-breakdown from story description")
     print(f"  {ui.B}2.{ui.R}  Enter tasks manually")
     print(f"  {ui.B}3.{ui.R}  Both (AI suggestions → review → add/remove)")
@@ -370,13 +355,7 @@ def cmd_end(args):
         ui.err("No valid selection.")
         return
 
-    close_state = cfg.get("close_state", TaskState.CLOSED.value)
-    valid_states = [s.value for s in TaskState]
-    if close_state not in valid_states:
-        ui.warn(
-            f"State '{close_state}' not valid. Using '{TaskState.CLOSED.value}' instead."
-        )
-        close_state = TaskState.CLOSED.value
+    close_state = TaskState.CLOSED.value
     closed_story_ids = set()
 
     ui.hdr(f"Mark tasks as '{close_state}'")
@@ -418,9 +397,9 @@ def cmd_end(args):
                 azdo.set_workitem_state(sess, cfg, story_id, close_state)
                 ui.ok(f"Story #{story_id} marked as '{close_state}'")
             except requests.HTTPError as e:
-                ui.err(
-                    f"Story #{story_id} — {e.response.status_code}: {e.response.text[:120]}"
-                )
+                msg = f"Story #{story_id} — {e.response.status_code}: "
+                msg += e.response.text[:120]
+                ui.err(msg)
 
     all_tasks = st.get("tasks", [])
     closed_c = sum(1 for t in all_tasks if t.get("closed"))

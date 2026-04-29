@@ -69,7 +69,7 @@ Interactive prompts for:
 | `pat` | Personal Access Token — needs **Work Items (Read & Write)** scope |
 | `anthropic_api_key` | From console.anthropic.com — for AI task breakdown |
 | `assigned_to` | Your email/display name — used to filter stories |
-| `close_state` | `Done` / `Closed` / `Resolved` (depends on your process template) |
+| `area_path` | Default area path for new tasks (optional) |
 
 ---
 

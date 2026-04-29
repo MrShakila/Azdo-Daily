@@ -11,7 +11,20 @@
       "Bash(python3 -c \"from config import load_cfg; cfg = load_cfg\\(\\); print\\(f'✓ Config loaded from .config/settings.json'\\); print\\(f'  org: {cfg.get\\(\\\\\"org\\\\\"\\)}'\\); print\\(f'  project: {cfg.get\\(\\\\\"project\\\\\"\\)}'\\)\")",
       "Bash(pip install *)",
       "Bash(azdo-daily --help)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git tag -a v1.0.0 -m 'Release 1.0.0 - Azure DevOps Daily Task Automation *)",
+      "Bash(git commit -m 'ci: add GitHub Actions workflows for testing and PyPI publishing *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'docs: add CONTRIBUTING and CHANGELOG *)",
+      "Bash(git commit -m 'fix: update help text and fix runtime import in config.py *)",
+      "Bash(git commit -m 'fix: update help text in commands.py *)",
+      "Bash(git commit -m 'fix: add error handling for malformed JSON in state.py *)",
+      "Bash(git commit -m 'fix: add error checking to add_comment\\(\\) in azdo.py *)",
+      "Bash(git commit -m 'style: format code with black *)",
+      "Bash(git commit -m 'style: remove blank line after docstring in azdo.py *)",
+      "Bash(git commit *)",
+      "Bash(git tag *)",
+      "Bash(python3 -m flake8 /Users/shakila/Downloads/azdo_daily/azdo_daily/ --max-line-length=88)"
     ]
   }
 }
