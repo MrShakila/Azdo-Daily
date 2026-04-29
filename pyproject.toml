@@ -27,8 +27,8 @@ dependencies = ["requests>=2.28.0"]
 dev = ["black>=23.0.0", "flake8>=6.0.0", "pytest>=7.0.0"]
 
 [project.urls]
-Repository = "https://github.com/MrShakila/Azdo-Daily"
-Issues = "https://github.com/MrShakila/Azdo-Daily/issues"
+Repository = "https://github.com/yourusername/azdo-daily"
+Issues = "https://github.com/yourusername/azdo-daily/issues"
 
 [project.scripts]
 azdo-daily = "azdo_daily.main:main"
