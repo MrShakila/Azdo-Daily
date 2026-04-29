@@ -442,11 +442,16 @@ def cmd_end(args):
         ui.warn("No active user stories assigned to you.")
         return
 
-    # Fetch all child tasks from stories
+    # Fetch all child tasks from stories, track task→story mapping
     all_tasks = []
+    story_task_ids = {}  # story_id -> [task_ids]
+    task_to_story = {}  # task_id -> story_id
     for s in stories:
         try:
             tasks = azdo.get_task_children(sess, cfg, s["id"])
+            story_task_ids[s["id"]] = [t["id"] for t in tasks]
+            for t in tasks:
+                task_to_story[t["id"]] = s["id"]
             all_tasks.extend(tasks)
         except requests.HTTPError:
             pass
@@ -455,7 +460,7 @@ def cmd_end(args):
         ui.warn("No tasks found for active stories.")
         return
 
-    # Format tasks for display (all non-closed tasks are available to complete)
+    # Format tasks for display
     open_tasks = [
         {
             "id": t["id"],
@@ -476,7 +481,9 @@ def cmd_end(args):
     if not selected_tasks:
         ui.err("No valid selection.")
         return
+
     close_state = TaskState.CLOSED.value
+    closed_task_ids = set()
 
     ui.hdr(f"Mark tasks as '{close_state}'")
     for task in selected_tasks:
@@ -493,12 +500,32 @@ def cmd_end(args):
             azdo.resolve_task(
                 sess, cfg, task["id"], close_state, completed_hours, comment
             )
+            closed_task_ids.add(task["id"])
             ui.ok(f"Marked as '{close_state}'")
         except requests.HTTPError as e:
             ui.err(f"#{task['id']} — {e.response.status_code}")
             ui.err(f"  {e.response.text}")
 
     print()
+
+    # Auto-resolve stories where all tasks are now closed
+    already_open = {t["id"] for t in all_tasks} - {t["id"] for t in open_tasks}
+    for story_id, task_ids in story_task_ids.items():
+        remaining_open = [
+            tid
+            for tid in task_ids
+            if tid not in closed_task_ids and tid not in already_open
+        ]
+        if not remaining_open:
+            try:
+                azdo.set_workitem_state(sess, cfg, story_id, StoryState.RESOLVED.value)
+                ui.ok(f"Story #{story_id} auto-resolved (all tasks closed)")
+            except requests.HTTPError as e:
+                ui.warn(
+                    f"Story #{story_id} — could not resolve: "
+                    f"{e.response.status_code}"
+                )
+
     ui.info(f"Tasks marked as '{close_state}'.")
 
 
