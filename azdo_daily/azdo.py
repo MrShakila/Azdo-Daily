@@ -65,6 +65,22 @@ def get_workitems(sess: requests.Session, cfg: dict, ids: list[int]) -> list[dic
     return r.json().get("value", [])
 
 
+def refresh_task_status(sess: requests.Session, cfg: dict, task_ids: list[int]) -> dict:
+    """Fetch fresh task status from API, return map of task_id -> {id, title, state}."""
+    if not task_ids:
+        return {}
+    items = get_workitems(sess, cfg, task_ids)
+    return {
+        t["id"]: {
+            "id": t["id"],
+            "title": t["fields"].get("System.Title", ""),
+            "state": t["fields"].get("System.State", ""),
+            "closed": t["fields"].get("System.State", "").lower() == "closed",
+        }
+        for t in items
+    }
+
+
 def get_task_children(sess: requests.Session, cfg: dict, story_id: int) -> list[dict]:
     """Fetch non-closed child tasks of a story via REST API relations."""
     base = wit_base(cfg)

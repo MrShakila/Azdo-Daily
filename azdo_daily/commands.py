@@ -270,7 +270,22 @@ def cmd_start(args):
     st = state.load_state()
 
     tasks = st.get("tasks", [])
-    new_tasks = [t for t in tasks if not t.get("active") and not t.get("closed")]
+    if not tasks:
+        ui.warn("No tasks for today.")
+        return
+
+    # Fetch fresh status from API
+    task_ids = [t["id"] for t in tasks]
+    api_status = azdo.refresh_task_status(sess, cfg, task_ids)
+
+    # Filter for non-closed, non-active tasks
+    new_tasks = [
+        t
+        for t in tasks
+        if api_status.get(t["id"], {}).get("closed") is False
+        and api_status.get(t["id"], {}).get("state", "").lower() != "active"
+    ]
+
     if not new_tasks:
         ui.warn("No new tasks to activate.")
         return
@@ -318,7 +333,20 @@ def cmd_update(args):
     sess = azdo.session(cfg)
     st = state.load_state()
 
-    open_tasks = [t for t in st.get("tasks", []) if not t.get("closed")]
+    tasks = st.get("tasks", [])
+    if not tasks:
+        ui.warn("No tasks for today.")
+        return
+
+    # Fetch fresh status from API
+    task_ids = [t["id"] for t in tasks]
+    api_status = azdo.refresh_task_status(sess, cfg, task_ids)
+
+    # Filter for non-closed tasks
+    open_tasks = [
+        t for t in tasks if api_status.get(t["id"], {}).get("closed") is False
+    ]
+
     if not open_tasks:
         ui.warn("No open tasks for today.")
         return
@@ -367,7 +395,20 @@ def cmd_end(args):
     sess = azdo.session(cfg)
     st = state.load_state()
 
-    open_tasks = [t for t in st.get("tasks", []) if not t.get("closed")]
+    tasks = st.get("tasks", [])
+    if not tasks:
+        ui.warn("No tasks for today.")
+        return
+
+    # Fetch fresh status from API
+    task_ids = [t["id"] for t in tasks]
+    api_status = azdo.refresh_task_status(sess, cfg, task_ids)
+
+    # Filter for non-closed tasks
+    open_tasks = [
+        t for t in tasks if api_status.get(t["id"], {}).get("closed") is False
+    ]
+
     if not open_tasks:
         ui.warn("No open tasks for today.")
         return
