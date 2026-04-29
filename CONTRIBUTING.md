@@ -12,7 +12,14 @@ pip install -e ".[dev]"
 
 ## Code Style
 
-Format with black:
+Install pre-commit hooks (auto-formats on commit):
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Manual formatting with black:
 
 ```bash
 black azdo_daily/
