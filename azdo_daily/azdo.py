@@ -33,11 +33,12 @@ def _patch_workitem(sess: requests.Session, cfg: dict, item_id: int, ops: list):
 def add_comment(sess: requests.Session, cfg: dict, item_id: int, text: str):
     """Add comment to work item."""
     base = wit_base(cfg)
-    sess.post(
+    r = sess.post(
         f"{base}/workitems/{item_id}/comments?api-version=7.1-preview.3",
         json={"text": text},
         headers={"Content-Type": "application/json"},
     )
+    r.raise_for_status()
 
 
 def set_workitem_state(sess: requests.Session, cfg: dict, item_id: int, state: str):
