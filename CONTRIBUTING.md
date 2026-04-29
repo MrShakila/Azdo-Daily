@@ -5,8 +5,8 @@
 Clone and install in development mode:
 
 ```bash
-git clone https://github.com/yourusername/azdo-daily.git
-cd azdo-daily
+git clone https://github.com/MrShakila/Azdo-Daily.git
+cd Azdo-Daily
 pip install -e ".[dev]"
 ```
 
