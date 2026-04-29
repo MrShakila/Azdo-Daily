@@ -268,24 +268,44 @@ def cmd_start(args):
     cfg = config.load_cfg()
     config.require_cfg(cfg, "org", "project", "pat")
     sess = azdo.session(cfg)
-    date_str = args.date
-    st = state.load_state(date_str)
 
-    tasks = st.get("tasks", [])
-    if not tasks:
-        ui.warn("No tasks for today.")
+    # Fetch stories from API
+    ui.info("Fetching stories from Azure DevOps…")
+    try:
+        stories = azdo.get_my_stories(sess, cfg)
+    except requests.HTTPError as e:
+        ui.err(f"Azure DevOps error: {e.response.status_code}")
         return
 
-    # Fetch fresh status from API
-    task_ids = [t["id"] for t in tasks]
-    api_status = azdo.refresh_task_status(sess, cfg, task_ids)
+    if not stories:
+        ui.warn("No active user stories assigned to you.")
+        return
 
-    # Filter for non-closed, non-active tasks
+    # Fetch all child tasks from stories
+    all_tasks = []
+    task_to_story = {}
+    for s in stories:
+        try:
+            tasks = azdo.get_task_children(sess, cfg, s["id"])
+            for t in tasks:
+                task_to_story[t["id"]] = s["id"]
+            all_tasks.extend(tasks)
+        except requests.HTTPError:
+            pass
+
+    if not all_tasks:
+        ui.warn("No tasks found for active stories.")
+        return
+
+    # Filter for tasks not already active
     new_tasks = [
-        t
-        for t in tasks
-        if api_status.get(t["id"], {}).get("closed") is False
-        and api_status.get(t["id"], {}).get("state", "").lower() != "active"
+        {
+            "id": t["id"],
+            "title": f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
+            f"{t['fields'].get('System.Title', '')}",
+        }
+        for t in all_tasks
+        if t.get("fields", {}).get("System.State", "").lower() != "active"
     ]
 
     if not new_tasks:
@@ -295,15 +315,14 @@ def cmd_start(args):
     ui.hdr("New tasks — select to activate")
     ui.print_tasks(new_tasks)
 
-    selected_tasks = ui.select_from_list(new_tasks, "Select tasks to start")
-    if not selected_tasks:
+    selected_indices = ui.select_from_list(new_tasks, "Select tasks to start")
+    if not selected_indices:
         ui.err("No valid selection.")
         return
 
-    story_ids = set()
-    for task in selected_tasks:
-        for sid in task.get("story_ids", []):
-            story_ids.add(sid)
+    # Collect unique story IDs from selected tasks
+    selected_task_ids = [new_tasks[i]["id"] for i in selected_indices]
+    story_ids = set(task_to_story[tid] for tid in selected_task_ids)
 
     if story_ids:
         ui.hdr("Auto-activating stories (if in New state)…")
@@ -315,14 +334,12 @@ def cmd_start(args):
                 pass
 
     ui.hdr("Activating tasks...")
-    for task in selected_tasks:
+    for task_id in selected_task_ids:
         try:
-            azdo.set_workitem_state(sess, cfg, task["id"], TaskState.ACTIVE.value)
-            task["active"] = True
-            state.save_state(st)
-            ui.ok(f"#{task['id']}  activated")
+            azdo.set_workitem_state(sess, cfg, task_id, TaskState.ACTIVE.value)
+            ui.ok(f"#{task_id}  activated")
         except requests.HTTPError as e:
-            ui.err(f"#{task['id']} — {e.response.status_code}: {e.response.text[:120]}")
+            ui.err(f"#{task_id} — {e.response.status_code}: {e.response.text[:120]}")
 
     print()
     ui.info("Tasks activated.")
