@@ -24,7 +24,8 @@
       "Bash(git commit -m 'style: remove blank line after docstring in azdo.py *)",
       "Bash(git commit *)",
       "Bash(git tag *)",
-      "Bash(python3 -m flake8 /Users/shakila/Downloads/azdo_daily/azdo_daily/ --max-line-length=88)"
+      "Bash(python3 -m flake8 /Users/shakila/Downloads/azdo_daily/azdo_daily/ --max-line-length=88)",
+      "Bash(git rm *)"
     ]
   }
 }
