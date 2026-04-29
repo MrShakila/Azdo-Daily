@@ -92,9 +92,7 @@ def print_stories(stories: list[dict]):
         state = fields.get("System.State", "?")
         prio = int(fields.get("Microsoft.VSTS.Common.Priority", 2))
         pc = prio_col.get(prio, "")
-        print(
-            f"  {B}{i:>2}.{R}  {title}  " f"{pc}[P{prio}]{R}  {DIM}{state}{R}"
-        )
+        print(f"  {B}{i:>2}.{R}  {title}  " f"{pc}[P{prio}]{R}  {DIM}{state}{R}")
     sep()
 
 

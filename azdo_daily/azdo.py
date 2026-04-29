@@ -95,7 +95,9 @@ def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
     return r2.json().get("value", [])
 
 
-def create_task(sess: requests.Session, cfg: dict, task: dict, parent_ids: list[int]) -> dict:
+def create_task(
+    sess: requests.Session, cfg: dict, task: dict, parent_ids: list[int]
+) -> dict:
     """Create Task work item linked to parent stories."""
     base = wit_base(cfg)
     ops = [
@@ -127,9 +129,7 @@ def create_task(sess: requests.Session, cfg: dict, task: dict, parent_ids: list[
             {"op": "add", "path": "/fields/System.AreaPath", "value": cfg["area_path"]}
         )
     if task.get("tags"):
-        ops.append(
-            {"op": "add", "path": "/fields/System.Tags", "value": task["tags"]}
-        )
+        ops.append({"op": "add", "path": "/fields/System.Tags", "value": task["tags"]})
     if task.get("effort"):
         ops.append(
             {

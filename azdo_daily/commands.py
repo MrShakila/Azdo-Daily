@@ -373,7 +373,9 @@ def cmd_end(args):
     close_state = cfg.get("close_state", TaskState.CLOSED.value)
     valid_states = [s.value for s in TaskState]
     if close_state not in valid_states:
-        ui.warn(f"State '{close_state}' not valid. Using '{TaskState.CLOSED.value}' instead.")
+        ui.warn(
+            f"State '{close_state}' not valid. Using '{TaskState.CLOSED.value}' instead."
+        )
         close_state = TaskState.CLOSED.value
     closed_story_ids = set()
 
@@ -398,8 +400,7 @@ def cmd_end(args):
             story_ids = task.get("story_ids", [])
             for sid in story_ids:
                 all_story_tasks = [
-                    t for t in st.get("tasks", [])
-                    if sid in t.get("story_ids", [])
+                    t for t in st.get("tasks", []) if sid in t.get("story_ids", [])
                 ]
                 if all(t.get("closed") for t in all_story_tasks):
                     closed_story_ids.add(sid)
