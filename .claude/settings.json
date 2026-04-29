@@ -3,7 +3,11 @@
     "allow": [
       "mcp__plugin_context-mode_context-mode__ctx_execute",
       "Bash(python main.py status)",
-      "Bash(python3 main.py status)"
+      "Bash(python3 main.py status)",
+      "mcp__plugin_context-mode_context-mode__ctx_batch_execute",
+      "Bash(python3 -c \"import main; print\\('✓ imports OK'\\)\")",
+      "Bash(python3 main.py --help)",
+      "Bash(awk '{print $9, $5}')"
     ]
   }
 }
