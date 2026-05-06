@@ -80,7 +80,7 @@ def cmd_create(args):
         ui.warn("No active user stories found assigned to you.")
         sys.exit(0)
 
-    ui.info(f"Found {len(stories)} user story/stories:")
+    ui.info(f"Found {len(stories)} {'story' if len(stories) == 1 else 'stories'}:")
     ui.print_stories(stories)
 
     raw = ui.ask("Select stories to work on today (e.g. 1  or  1,3  or  1-3)")
@@ -94,7 +94,8 @@ def cmd_create(args):
 
     ui.hdr("Selected stories:")
     for s in selected:
-        ui.ok(f"#{s['id']}  {s['fields']['System.Title']}")
+        item_type = s["fields"].get("System.WorkItemType", "User Story")
+        ui.ok(f"[{item_type}] #{s['id']}  {s['fields']['System.Title']}")
 
     st = state.load_state(date_str)
     st["stories"] = [
@@ -333,7 +334,7 @@ def cmd_start(args):
         for story_id in story_ids:
             try:
                 azdo.set_workitem_state(sess, cfg, story_id, StoryState.ACTIVE.value)
-                ui.ok(f"Story #{story_id} activated")
+                ui.ok(f"[User Story] #{story_id} activated")
             except requests.HTTPError:
                 pass
 
@@ -341,7 +342,7 @@ def cmd_start(args):
     for task_id in selected_task_ids:
         try:
             azdo.set_workitem_state(sess, cfg, task_id, TaskState.ACTIVE.value)
-            ui.ok(f"#{task_id}  activated")
+            ui.ok(f"[Task] #{task_id} activated")
         except requests.HTTPError as e:
             ui.err(f"#{task_id} — {e.response.status_code}: {e.response.text[:120]}")
 
@@ -377,7 +378,7 @@ def cmd_update(args):
             pass
 
     if not all_tasks:
-        ui.warn("No tasks found for active stories.")
+        ui.warn("No tasks found for your stories.")
         return
 
     # Format tasks for display (all non-closed tasks are available to update)
@@ -385,16 +386,17 @@ def cmd_update(args):
         {
             "id": t["id"],
             "title": f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
+            f"[{t.get('fields', {}).get('System.State', '')}] "
             f"{t['fields'].get('System.Title', '')}",
         }
         for t in all_tasks
     ]
 
     if not open_tasks:
-        ui.warn("No open tasks for active stories.")
+        ui.warn("No open tasks for your stories.")
         return
 
-    ui.hdr("Open tasks — select to log progress")
+    ui.hdr("Tasks — select to log progress")
     ui.print_tasks(open_tasks)
 
     selected_tasks = ui.select_from_list(open_tasks, "Select tasks to update")
@@ -461,7 +463,7 @@ def cmd_end(args):
             pass
 
     if not all_tasks:
-        ui.warn("No tasks found for active stories.")
+        ui.warn("No tasks found for your stories.")
         return
 
     # Format tasks for display
@@ -469,16 +471,17 @@ def cmd_end(args):
         {
             "id": t["id"],
             "title": f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
+            f"[{t.get('fields', {}).get('System.State', '')}] "
             f"{t['fields'].get('System.Title', '')}",
         }
         for t in all_tasks
     ]
 
     if not open_tasks:
-        ui.warn("No open tasks for active stories.")
+        ui.warn("No open tasks for your stories.")
         return
 
-    ui.hdr("Open tasks — select to mark as done")
+    ui.hdr("Tasks — select to mark as done")
     ui.print_tasks(open_tasks)
 
     selected_tasks = ui.select_from_list(open_tasks, "Select tasks to complete")
@@ -523,10 +526,10 @@ def cmd_end(args):
         if task_ids and not remaining_open:
             try:
                 azdo.set_workitem_state(sess, cfg, story_id, StoryState.RESOLVED.value)
-                ui.ok(f"Story #{story_id} auto-resolved (all tasks closed)")
+                ui.ok(f"[User Story] #{story_id} auto-resolved (all tasks closed)")
             except requests.HTTPError as e:
                 ui.warn(
-                    f"Story #{story_id} — could not resolve: "
+                    f"[User Story] #{story_id} — could not resolve: "
                     f"{e.response.status_code}"
                 )
 
@@ -556,10 +559,12 @@ def cmd_status(args):
         ui.warn("No active user stories assigned to you.")
         return
 
-    ui.info(f"Active stories ({len(stories)}):")
+    ui.info(f"Your stories ({len(stories)}):")
     for s in stories:
+        item_type = s["fields"].get("System.WorkItemType", "User Story")
         state = s["fields"].get("System.State", "")
-        print(f"    {ui.CY}#{s['id']}{ui.R}  [{state}]  {s['fields']['System.Title']}")
+        title = s["fields"]["System.Title"]
+        print(f"    {ui.CY}#{s['id']}{ui.R}  [{item_type}]  [{state}]  {title}")
     print()
 
     # Fetch all child tasks from stories (include done to show totals)
@@ -584,7 +589,7 @@ def cmd_status(args):
             )
 
     if total_task_count == 0:
-        ui.info("No tasks found for active stories.")
+        ui.info("No tasks found for your stories.")
         return
 
     if not open_tasks:
@@ -603,7 +608,7 @@ def cmd_status(args):
         display_tasks.append(
             {
                 "id": t["id"],
-                "title": f"[{task_type}] {title}",
+                "title": f"[{task_type}] [{state_val}] {title}",
                 "closed": state_val.lower() == "closed",
             }
         )

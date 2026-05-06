@@ -159,7 +159,7 @@ def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
     # Batch-fetch details
     r2 = sess.get(
         f"{base}/workitems?ids={','.join(ids)}"
-        "&fields=System.Id,System.Title,System.State,"
+        "&fields=System.Id,System.Title,System.State,System.WorkItemType,"
         "Microsoft.VSTS.Common.Priority,System.AreaPath"
         "&api-version=7.1",
         headers={"Content-Type": "application/json"},
