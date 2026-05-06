@@ -516,7 +516,7 @@ def cmd_end(args):
             for tid in task_ids
             if tid not in closed_task_ids and tid not in already_open
         ]
-        if not remaining_open:
+        if task_ids and not remaining_open:
             try:
                 azdo.set_workitem_state(sess, cfg, story_id, StoryState.RESOLVED.value)
                 ui.ok(f"Story #{story_id} auto-resolved (all tasks closed)")
