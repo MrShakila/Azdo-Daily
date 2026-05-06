@@ -290,29 +290,33 @@ def cmd_start(args):
             for t in tasks:
                 task_to_story[t["id"]] = s["id"]
             all_tasks.extend(tasks)
-        except requests.HTTPError:
-            pass
+        except requests.HTTPError as e:
+            ui.warn(
+                f"Failed to fetch tasks for story #{s['id']}: {e.response.status_code}"
+            )
 
     if not all_tasks:
-        ui.warn("No tasks found for active stories.")
+        ui.warn("No tasks found. Run 'azdo-daily create' to generate tasks first.")
         return
 
-    # Filter for tasks not already active
+    # Show all non-done tasks (New + Active)
     new_tasks = [
         {
             "id": t["id"],
             "title": f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
+            f"[{t.get('fields', {}).get('System.State', '')}] "
             f"{t['fields'].get('System.Title', '')}",
         }
         for t in all_tasks
-        if t.get("fields", {}).get("System.State", "").lower() != "active"
     ]
 
     if not new_tasks:
-        ui.warn("No new tasks to activate.")
+        ui.warn(
+            "All tasks already active. Use 'azdo-daily update' or 'azdo-daily end'."
+        )
         return
 
-    ui.hdr("New tasks — select to activate")
+    ui.hdr("Tasks — select to activate")
     ui.print_tasks(new_tasks)
 
     selected_tasks = ui.select_from_list(new_tasks, "Select tasks to start")
