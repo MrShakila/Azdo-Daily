@@ -554,7 +554,8 @@ def cmd_status(args):
 
     ui.info(f"Active stories ({len(stories)}):")
     for s in stories:
-        print(f"    {ui.CY}#{s['id']}{ui.R}  {s['fields']['System.Title']}")
+        state = s["fields"].get("System.State", "")
+        print(f"    {ui.CY}#{s['id']}{ui.R}  [{state}]  {s['fields']['System.Title']}")
     print()
 
     # Fetch all child tasks from stories (include done to show totals)
