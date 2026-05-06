@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-05-06
+
+### Fixed
+
+- **Start command** — Now shows both New and Active tasks (previously filtered out Active tasks, causing "No new tasks" even when tasks existed)
+- **Start command** — API errors per story now surface as warnings instead of being silently ignored
+- **Status output** — Story state (New/Active/Resolved/etc.) now shown next to each story
+
 ## [1.4.2] - 2026-05-06
 
 ### Fixed
