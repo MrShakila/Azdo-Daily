@@ -73,7 +73,7 @@ def cmd_create(args):
     try:
         stories = azdo.get_my_stories(sess, cfg)
     except requests.HTTPError as e:
-        ui.err(f"Azure DevOps error: {e.response.status_code} {e.response.text[:200]}")
+        ui.err(f"Azure DevOps error: {e.response.status_code}")
         sys.exit(1)
 
     if not stories:
@@ -153,8 +153,8 @@ def cmd_create(args):
                     proposed_tasks = ai_tasks
                     ui.hdr(f"AI suggested {len(proposed_tasks)} task(s):")
                 ui.print_tasks(proposed_tasks)
-            except Exception as e:
-                ui.err(f"AI error: {e}")
+            except Exception:
+                ui.err("AI task breakdown failed")
                 if mode == "2":
                     sys.exit(1)
                 if mode == "4":
@@ -252,11 +252,9 @@ def cmd_create(args):
                 print(f"  {ui.DIM}{task_url}{ui.R}")
             print(f"  {ui.DIM}→ linked to {linked}{ui.R}")
         except requests.HTTPError as e:
-            ui.err(
-                f"{task['title']} — {e.response.status_code}: {e.response.text[:120]}"
-            )
-        except Exception as e:
-            ui.err(f"{task['title']} — {e}")
+            ui.err(f"{task['title']} — HTTP {e.response.status_code}")
+        except Exception:
+            ui.err(f"{task['title']} — Failed to create")
 
     st["tasks"] = st.get("tasks", []) + created
     state.save_state(st)
@@ -344,7 +342,7 @@ def cmd_start(args):
             azdo.set_workitem_state(sess, cfg, task_id, TaskState.ACTIVE.value)
             ui.ok(f"[Task] #{task_id} activated")
         except requests.HTTPError as e:
-            ui.err(f"#{task_id} — {e.response.status_code}: {e.response.text[:120]}")
+            ui.err(f"#{task_id} — HTTP {e.response.status_code}")
 
     print()
     ui.info("Tasks activated.")
@@ -510,8 +508,7 @@ def cmd_end(args):
             closed_task_ids.add(task["id"])
             ui.ok(f"Marked as '{close_state}'")
         except requests.HTTPError as e:
-            ui.err(f"#{task['id']} — {e.response.status_code}")
-            ui.err(f"  {e.response.text}")
+            ui.err(f"#{task['id']} — Failed to update (HTTP {e.response.status_code})")
 
     print()
 

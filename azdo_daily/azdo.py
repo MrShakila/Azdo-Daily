@@ -125,6 +125,8 @@ def get_task_children(
 def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
     """WIQL query: active User Stories assigned to me."""
     assignee = cfg.get("assigned_to") or "@Me"
+    if "'" in assignee:
+        raise ValueError("Invalid assignee: contains forbidden character")
     if "@" not in assignee and assignee != "@Me":
         assignee_clause = f"[System.AssignedTo] contains '{assignee}'"
     else:
