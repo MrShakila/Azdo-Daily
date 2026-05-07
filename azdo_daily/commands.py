@@ -670,3 +670,41 @@ def cmd_reconfigure(args):
         return
 
     cmd_configure(args)
+
+
+def cmd_nuke(args):
+    """Delete all config and state files (destructive)."""
+    ui.hdr("⚠️  NUKE — Remove all config and state")
+    ui.err("This will DELETE:")
+    ui.err("  • .config/settings.json (credentials, API keys)")
+    ui.err("  • state/ (all daily task history)")
+    print()
+    ui.warn("This cannot be undone.")
+    print()
+
+    confirm = ui.ask("Type 'nuke' to confirm", "")
+    if confirm.lower() != "nuke":
+        ui.warn("Cancelled.")
+        return
+
+    try:
+        config_file = config.CONFIG_FILE
+        state_dir = state.STATE_DIR
+
+        deleted = []
+        if config_file.exists():
+            config_file.unlink()
+            deleted.append(".config/settings.json")
+
+        if state_dir.exists():
+            import shutil
+
+            shutil.rmtree(state_dir)
+            deleted.append("state/")
+
+        if deleted:
+            ui.ok("Deleted: " + ", ".join(deleted))
+        else:
+            ui.info("Nothing to delete.")
+    except Exception as e:
+        ui.err(f"Failed to nuke: {e}")

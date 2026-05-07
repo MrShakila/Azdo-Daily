@@ -17,6 +17,7 @@ from azdo_daily.commands import (
     cmd_configure,
     cmd_create,
     cmd_end,
+    cmd_nuke,
     cmd_reconfigure,
     cmd_start,
     cmd_status,
@@ -63,6 +64,7 @@ workflow:
 
     sub.add_parser("reconfigure", help="Reconfigure credentials and settings")
     sub.add_parser("clear-history", help="Clear daily state and task history")
+    sub.add_parser("nuke", help="Delete all config and state (destructive)")
 
     args = ap.parse_args()
     {
@@ -74,6 +76,7 @@ workflow:
         "status": cmd_status,
         "reconfigure": cmd_reconfigure,
         "clear-history": cmd_clear_history,
+        "nuke": cmd_nuke,
     }[args.cmd](args)
 
 
