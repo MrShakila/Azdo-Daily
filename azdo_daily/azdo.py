@@ -141,7 +141,8 @@ def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
             SELECT [System.Id],[System.Title],[System.State],
                    [System.AreaPath],[Microsoft.VSTS.Common.Priority]
             FROM   WorkItems
-            WHERE  [System.WorkItemType] IN ('User Story','Story')
+            WHERE  [System.TeamProject] = '{cfg['project']}'
+              AND  [System.WorkItemType] IN ('User Story','Story')
               AND  {assignee_clause}
               AND  [System.State] NOT IN ('Closed','Removed')
             ORDER BY [Microsoft.VSTS.Common.Priority] ASC,
