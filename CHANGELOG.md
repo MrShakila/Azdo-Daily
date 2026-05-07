@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-05-07
+
+### Added
+
+- **Doctor command** — `azdo-daily doctor` validates configuration and tests API connectivity
+  - Checks config file exists and required fields present
+  - Tests Azure DevOps and Anthropic API connectivity
+  - Provides detailed error messages for troubleshooting
+- **Multi-type support** — Now supports all Azure DevOps work item types (Epic, Feature, User Story, Bug, Issue)
+  - Maintains parent-child hierarchy regardless of type
+  - Fetches all child work items, not just Tasks
+  - Supports full Azure DevOps work item structure
+
 ## [1.5.5] - 2026-05-07
 
 ### Fixed
