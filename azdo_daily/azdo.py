@@ -124,6 +124,9 @@ def get_task_children(
 
 def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
     """WIQL query: active User Stories assigned to me."""
+    project = cfg.get("project", "")
+    if "'" in project:
+        raise ValueError("Invalid project: contains forbidden character")
     assignee = cfg.get("assigned_to") or "@Me"
     if "'" in assignee:
         raise ValueError("Invalid assignee: contains forbidden character")
