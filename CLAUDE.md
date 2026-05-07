@@ -28,6 +28,7 @@ azdo_daily/
 | `azdo-daily update` | `cmd_update` | Log hours/notes on open tasks |
 | `azdo-daily end` | `cmd_end` | Close tasks, auto-resolve story if all done |
 | `azdo-daily status` | `cmd_status` | Show stories + open tasks with states |
+| `azdo-daily doctor` | `cmd_doctor` | Check config health and API connectivity |
 | `azdo-daily nuke` | `cmd_nuke` | Delete all config and state (destructive) |
 | `azdo-daily help` | `cmd_help` | Show all available commands |
 

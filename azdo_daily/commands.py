@@ -672,6 +672,83 @@ def cmd_reconfigure(args):
     cmd_configure(args)
 
 
+def cmd_doctor(args):
+    """Check configuration health and connectivity."""
+    ui.hdr("Configuration Doctor")
+
+    # Check config file exists
+    if not config.CONFIG_FILE.exists():
+        ui.err("❌ Config file not found: " + str(config.CONFIG_FILE))
+        ui.info("Run: azdo-daily configure")
+        return
+
+    ui.ok("✓ Config file exists")
+
+    # Load and check required fields
+    cfg = config.load_cfg()
+    required = ["org", "project", "pat", "assigned_to"]
+    missing = [k for k in required if not cfg.get(k)]
+
+    if missing:
+        ui.err(f"❌ Missing required config: {', '.join(missing)}")
+        return
+
+    ui.ok("✓ All required fields present")
+
+    # Test Azure DevOps API connectivity
+    ui.info("Testing Azure DevOps API...")
+    try:
+        sess = azdo.session(cfg)
+        stories = azdo.get_my_stories(sess, cfg)
+        ui.ok(f"✓ Azure DevOps API OK ({len(stories)} story/ies)")
+    except requests.HTTPError as e:
+        ui.err(f"❌ Azure DevOps API error: HTTP {e.response.status_code}")
+        if e.response.status_code == 401:
+            ui.err("  Invalid PAT or credentials")
+        elif e.response.status_code == 404:
+            ui.err("  Project or org not found")
+        return
+    except Exception as e:
+        ui.err(f"❌ Azure DevOps API failed: {type(e).__name__}")
+        return
+
+    # Test Anthropic API key if set
+    if cfg.get("anthropic_api_key"):
+        ui.info("Testing Anthropic API...")
+        try:
+            import requests as req
+
+            r = req.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": cfg["anthropic_api_key"],
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json={
+                    "model": "claude-opus-4-1",
+                    "max_tokens": 10,
+                    "messages": [{"role": "user", "content": "hi"}],
+                },
+                timeout=10,
+            )
+            r.raise_for_status()
+            ui.ok("✓ Anthropic API OK")
+        except requests.HTTPError as e:
+            ui.err(f"❌ Anthropic API error: HTTP {e.response.status_code}")
+            if e.response.status_code == 401:
+                ui.err("  Invalid API key")
+            return
+        except Exception as e:
+            ui.err(f"❌ Anthropic API failed: {type(e).__name__}")
+            return
+    else:
+        ui.warn("⊘ Anthropic API key not set (AI breakdown disabled)")
+
+    print()
+    ui.ok("All checks passed ✓")
+
+
 def cmd_help(args):
     """Show all available commands."""
     ui.hdr("Available commands")
@@ -684,6 +761,7 @@ def cmd_help(args):
         ("status", "Show today's stories and open tasks"),
         ("reconfigure", "Update credentials and settings"),
         ("clear-history", "Clear all daily state files"),
+        ("doctor", "Check config health and API connectivity"),
         ("nuke", "Delete all config and state (destructive)"),
         ("help", "Show this help message"),
     ]
