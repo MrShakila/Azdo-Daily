@@ -34,8 +34,20 @@ def load_cfg() -> dict:
 
 
 def save_cfg(cfg: dict):
-    """Save config to file."""
+    """Save config to file and ensure .config/ is in .gitignore."""
+    CONFIG_DIR.mkdir(exist_ok=True)
     CONFIG_FILE.write_text(json.dumps(cfg, indent=2))
+    _ensure_gitignore()
+
+
+def _ensure_gitignore():
+    """Add .config/ to .gitignore if git repo exists."""
+    git_root = Path.cwd() / ".gitignore"
+    if not git_root.exists():
+        return
+    content = git_root.read_text()
+    if ".config/" not in content:
+        git_root.write_text(content.rstrip() + "\n.config/\n")
 
 
 def require_cfg(cfg: dict, *keys: str):
