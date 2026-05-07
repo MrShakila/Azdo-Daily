@@ -515,8 +515,9 @@ def cmd_end(args):
 
     print()
 
-    # Auto-resolve stories where all tasks are now closed
+    # Find stories ready to resolve (all tasks closed)
     already_open = {t["id"] for t in all_tasks} - {t["id"] for t in open_tasks}
+    stories_to_resolve = []
     for story_id, task_ids in story_task_ids.items():
         remaining_open = [
             tid
@@ -524,14 +525,33 @@ def cmd_end(args):
             if tid not in closed_task_ids and tid not in already_open
         ]
         if task_ids and not remaining_open:
-            try:
-                azdo.set_workitem_state(sess, cfg, story_id, StoryState.RESOLVED.value)
-                ui.ok(f"[User Story] #{story_id} auto-resolved (all tasks closed)")
-            except requests.HTTPError as e:
-                ui.warn(
-                    f"[User Story] #{story_id} — could not resolve: "
-                    f"{e.response.status_code}"
-                )
+            stories_to_resolve.append(story_id)
+
+    # Confirm before resolving stories
+    if stories_to_resolve:
+        ui.hdr(f"Ready to resolve {len(stories_to_resolve)} story(ies)")
+        for story_id in stories_to_resolve:
+            story = next((s for s in stories if s["id"] == story_id), None)
+            if story:
+                title = story["fields"].get("System.Title", "")
+                item_type = story["fields"].get("System.WorkItemType", "User Story")
+                print(f"  [{item_type}] #{story_id}  {title}")
+
+        confirm = ui.ask("Resolve these stories? (yes/no)", "yes").lower()
+        if confirm.startswith("y"):
+            for story_id in stories_to_resolve:
+                try:
+                    azdo.set_workitem_state(
+                        sess, cfg, story_id, StoryState.RESOLVED.value
+                    )
+                    ui.ok(f"[User Story] #{story_id} resolved (all tasks closed)")
+                except requests.HTTPError as e:
+                    ui.warn(
+                        f"[User Story] #{story_id} — could not resolve: "
+                        f"{e.response.status_code}"
+                    )
+        else:
+            ui.info("Story resolution skipped.")
 
     ui.info(f"Tasks marked as '{close_state}'.")
 
