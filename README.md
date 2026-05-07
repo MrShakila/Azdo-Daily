@@ -1,5 +1,7 @@
 # Azure DevOps Daily Task Automation
 
+![Logo](https://raw.githubusercontent.com/MrShakila/Azdo-Daily/main/image.png)
+
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PyPI](https://img.shields.io/badge/pypi-azdo--daily-blue.svg)](https://pypi.org/project/azdo-daily/)
