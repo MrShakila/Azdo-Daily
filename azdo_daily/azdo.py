@@ -87,7 +87,7 @@ _DONE_STATES = ("Closed", "Resolved", "Removed")
 def get_task_children(
     sess: requests.Session, cfg: dict, story_id: int, active_only: bool = True
 ) -> list[dict]:
-    """Fetch child tasks of a story. active_only=True skips Closed/Resolved/Removed."""
+    """Fetch child work items. active_only=True filters by state."""
     base = wit_base(cfg)
     r = sess.get(
         f"{base}/workitems/{story_id}?api-version=7.1&$expand=relations",
@@ -110,20 +110,17 @@ def get_task_children(
         return []
 
     all_items = get_workitems(sess, cfg, child_ids)
-    tasks = [
-        t for t in all_items if t.get("fields", {}).get("System.WorkItemType") == "Task"
-    ]
     if active_only:
-        tasks = [
+        all_items = [
             t
-            for t in tasks
+            for t in all_items
             if t.get("fields", {}).get("System.State") not in _DONE_STATES
         ]
-    return tasks
+    return all_items
 
 
 def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
-    """WIQL query: active User Stories assigned to me."""
+    """WIQL query: active work items (Epic/Feature/Story/Bug/Issue) assigned to me."""
     project = cfg.get("project", "")
     if "'" in project:
         raise ValueError("Invalid project: contains forbidden character")
@@ -139,13 +136,15 @@ def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
             else f"[System.AssignedTo] = '{assignee}'"
         )
 
+    types = "'Epic','Feature','User Story','Story','Bug','Issue'"
     wiql = {
         "query": f"""
             SELECT [System.Id],[System.Title],[System.State],
-                   [System.AreaPath],[Microsoft.VSTS.Common.Priority]
+                   [System.AreaPath],[Microsoft.VSTS.Common.Priority],
+                   [System.WorkItemType]
             FROM   WorkItems
             WHERE  [System.TeamProject] = '{cfg['project']}'
-              AND  [System.WorkItemType] IN ('User Story','Story')
+              AND  [System.WorkItemType] IN ({types})
               AND  {assignee_clause}
               AND  [System.State] NOT IN ('Closed','Removed')
             ORDER BY [Microsoft.VSTS.Common.Priority] ASC,
