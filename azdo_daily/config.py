@@ -6,8 +6,7 @@ from pathlib import Path
 
 from azdo_daily import ui
 
-BASE_DIR = Path(__file__).parent
-CONFIG_DIR = BASE_DIR / ".config"
+CONFIG_DIR = Path.cwd() / ".config"
 CONFIG_FILE = CONFIG_DIR / "settings.json"
 
 DEFAULT_CFG = {

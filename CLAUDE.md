@@ -13,7 +13,7 @@ azdo_daily/
   commands.py  — All command implementations (cmd_create, cmd_start, cmd_update, cmd_end, cmd_status)
   azdo.py      — Azure DevOps API calls (WIQL, work items, state transitions)
   ai.py        — Claude AI task breakdown
-  config.py    — Config load/save (.config/settings.json)
+  config.py    — Config load/save (project-local .config/settings.json)
   state.py     — Daily state persistence (state/YYYY-MM-DD.json)
   ui.py        — Terminal output helpers (hdr, ok, warn, err, ask, print_tasks)
 ```
