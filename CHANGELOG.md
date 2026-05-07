@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.5] - 2026-05-07
+
+### Fixed
+
+- **Project filtering** — User stories now correctly filtered by configured project instead of fetching across all projects in org
+- **Security** — Project name validation added to prevent WIQL injection (spaces allowed, quotes blocked)
+
 ## [1.5.4] - 2026-05-07
 
 ### Added
