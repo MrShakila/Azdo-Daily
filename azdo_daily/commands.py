@@ -672,6 +672,25 @@ def cmd_reconfigure(args):
     cmd_configure(args)
 
 
+def cmd_help(args):
+    """Show all available commands."""
+    ui.hdr("Available commands")
+    commands = [
+        ("configure", "Set org/project/PAT/API key"),
+        ("create", "Pick stories → generate tasks → create in Azure DevOps"),
+        ("start", "Activate tasks (mark as In Progress)"),
+        ("update", "Log progress hours/notes on tasks (keep open)"),
+        ("end", "Mark tasks done → auto-resolve story if all done"),
+        ("status", "Show today's stories and open tasks"),
+        ("reconfigure", "Update credentials and settings"),
+        ("clear-history", "Clear all daily state files"),
+        ("nuke", "Delete all config and state (destructive)"),
+        ("help", "Show this help message"),
+    ]
+    for cmd, desc in commands:
+        print(f"  {ui.B}{cmd:<16}{ui.R} {desc}")
+
+
 def cmd_nuke(args):
     """Delete all config and state files (destructive)."""
     ui.hdr("⚠️  NUKE — Remove all config and state")
