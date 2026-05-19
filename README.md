@@ -216,8 +216,8 @@ Each day's data in `state/YYYY-MM-DD.json`:
       "id": 101,
       "title": "Add login endpoint",
       "url": "https://...",
-      "active": true,
       "closed": false,
+      "start_date": "2026-05-19T09:30:45.123456",
       "completed_hours": 2.5,
       "remaining_hours": 1.0,
       "story_ids": [42]

@@ -337,12 +337,30 @@ def cmd_start(args):
                 pass
 
     ui.hdr("Activating tasks...")
+
     for task_id in selected_task_ids:
         try:
             azdo.set_workitem_state(sess, cfg, task_id, TaskState.ACTIVE.value)
             ui.ok(f"[Task] #{task_id} activated")
         except requests.HTTPError as e:
             ui.err(f"#{task_id} — HTTP {e.response.status_code}")
+
+    # Fetch updated work items to get StateChangeDate from API
+    try:
+        updated_items = azdo.get_workitems(sess, cfg, selected_task_ids)
+        task_state_dates = {
+            t["id"]: t.get("fields", {}).get("System.StateChangeDate")
+            for t in updated_items
+        }
+    except requests.HTTPError:
+        task_state_dates = {}
+
+    # Update state with start_date from API
+    st = state.load_state(args.date if hasattr(args, "date") else None)
+    for task in st.get("tasks", []):
+        if task["id"] in selected_task_ids and "start_date" not in task:
+            task["start_date"] = task_state_dates.get(task["id"])
+    state.save_state(st)
 
     print()
     ui.info("Tasks activated.")
