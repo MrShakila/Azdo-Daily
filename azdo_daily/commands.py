@@ -401,17 +401,19 @@ def cmd_update(args):
     # Format tasks for display (all non-closed tasks are available to update)
     open_tasks = []
     for t in all_tasks:
-        changed_date = t.get("fields", {}).get("System.ChangedDate", "")
+        state = t.get("fields", {}).get("System.State", "")
         start_str = ""
-        if changed_date:
-            try:
-                dt = datetime.fromisoformat(changed_date.replace("Z", "+00:00"))
-                start_str = f" @ {dt.strftime('%H:%M')}"
-            except (ValueError, AttributeError):
-                pass
+        if state == "Active":
+            changed_date = t.get("fields", {}).get("System.ChangedDate", "")
+            if changed_date:
+                try:
+                    dt = datetime.fromisoformat(changed_date.replace("Z", "+00:00"))
+                    start_str = f" @ {dt.strftime('%Y-%m-%d %H:%M')}"
+                except (ValueError, AttributeError):
+                    pass
         title = (
             f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
-            f"[{t.get('fields', {}).get('System.State', '')}] "
+            f"[{state}] "
             f"{t['fields'].get('System.Title', '')}{start_str}"
         )
         open_tasks.append({"id": t["id"], "title": title})
@@ -493,17 +495,19 @@ def cmd_end(args):
     # Format tasks for display
     open_tasks = []
     for t in all_tasks:
-        changed_date = t.get("fields", {}).get("System.ChangedDate", "")
+        state = t.get("fields", {}).get("System.State", "")
         start_str = ""
-        if changed_date:
-            try:
-                dt = datetime.fromisoformat(changed_date.replace("Z", "+00:00"))
-                start_str = f" @ {dt.strftime('%H:%M')}"
-            except (ValueError, AttributeError):
-                pass
+        if state == "Active":
+            changed_date = t.get("fields", {}).get("System.ChangedDate", "")
+            if changed_date:
+                try:
+                    dt = datetime.fromisoformat(changed_date.replace("Z", "+00:00"))
+                    start_str = f" @ {dt.strftime('%Y-%m-%d %H:%M')}"
+                except (ValueError, AttributeError):
+                    pass
         title = (
             f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
-            f"[{t.get('fields', {}).get('System.State', '')}] "
+            f"[{state}] "
             f"{t['fields'].get('System.Title', '')}{start_str}"
         )
         open_tasks.append({"id": t["id"], "title": title})
