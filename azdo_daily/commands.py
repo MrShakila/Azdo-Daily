@@ -408,7 +408,8 @@ def cmd_update(args):
             if changed_date:
                 try:
                     dt = datetime.fromisoformat(changed_date.replace("Z", "+00:00"))
-                    start_str = f" @ {dt.strftime('%Y-%m-%d %H:%M')}"
+                    local_dt = dt.astimezone()
+                    start_str = f" @ {local_dt.strftime('%Y-%m-%d %H:%M')}"
                 except (ValueError, AttributeError):
                     pass
         title = (
@@ -502,7 +503,8 @@ def cmd_end(args):
             if changed_date:
                 try:
                     dt = datetime.fromisoformat(changed_date.replace("Z", "+00:00"))
-                    start_str = f" @ {dt.strftime('%Y-%m-%d %H:%M')}"
+                    local_dt = dt.astimezone()
+                    start_str = f" @ {local_dt.strftime('%Y-%m-%d %H:%M')}"
                 except (ValueError, AttributeError):
                     pass
         title = (
