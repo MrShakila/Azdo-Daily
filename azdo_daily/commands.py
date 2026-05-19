@@ -1,6 +1,7 @@
 """CLI command implementations."""
 
 import sys
+from datetime import datetime
 from enum import Enum
 
 import requests
@@ -398,15 +399,22 @@ def cmd_update(args):
         return
 
     # Format tasks for display (all non-closed tasks are available to update)
-    open_tasks = [
-        {
-            "id": t["id"],
-            "title": f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
+    open_tasks = []
+    for t in all_tasks:
+        changed_date = t.get("fields", {}).get("System.ChangedDate", "")
+        start_str = ""
+        if changed_date:
+            try:
+                dt = datetime.fromisoformat(changed_date.replace("Z", "+00:00"))
+                start_str = f" @ {dt.strftime('%H:%M')}"
+            except (ValueError, AttributeError):
+                pass
+        title = (
+            f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
             f"[{t.get('fields', {}).get('System.State', '')}] "
-            f"{t['fields'].get('System.Title', '')}",
-        }
-        for t in all_tasks
-    ]
+            f"{t['fields'].get('System.Title', '')}{start_str}"
+        )
+        open_tasks.append({"id": t["id"], "title": title})
 
     if not open_tasks:
         ui.warn("No open tasks for your stories.")
@@ -483,15 +491,22 @@ def cmd_end(args):
         return
 
     # Format tasks for display
-    open_tasks = [
-        {
-            "id": t["id"],
-            "title": f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
+    open_tasks = []
+    for t in all_tasks:
+        changed_date = t.get("fields", {}).get("System.ChangedDate", "")
+        start_str = ""
+        if changed_date:
+            try:
+                dt = datetime.fromisoformat(changed_date.replace("Z", "+00:00"))
+                start_str = f" @ {dt.strftime('%H:%M')}"
+            except (ValueError, AttributeError):
+                pass
+        title = (
+            f"[{t.get('fields', {}).get('System.WorkItemType', 'Task')}] "
             f"[{t.get('fields', {}).get('System.State', '')}] "
-            f"{t['fields'].get('System.Title', '')}",
-        }
-        for t in all_tasks
-    ]
+            f"{t['fields'].get('System.Title', '')}{start_str}"
+        )
+        open_tasks.append({"id": t["id"], "title": title})
 
     if not open_tasks:
         ui.warn("No open tasks for your stories.")

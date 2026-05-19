@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.4] - 2026-05-19
+
+### Added
+
+- **Task activation time** — Display when each task was activated (last modified date) in `update` and `end` commands, format: `HH:MM` appended to task title
+
 ## [1.6.3] - 2026-05-19
 
 ### Fixed
