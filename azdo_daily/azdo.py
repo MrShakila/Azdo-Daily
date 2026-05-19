@@ -57,7 +57,7 @@ def get_workitems(sess: requests.Session, cfg: dict, ids: list[int]) -> list[dic
     r = sess.get(
         f"{base}/workitems?ids={','.join(map(str, ids))}"
         "&fields=System.Id,System.Title,System.State,System.WorkItemType,"
-        "Microsoft.VSTS.Common.Priority,System.AreaPath,System.StateChangeDate"
+        "Microsoft.VSTS.Common.Priority,System.AreaPath,System.ChangedDate"
         "&api-version=7.1",
         headers={"Content-Type": "application/json"},
     )

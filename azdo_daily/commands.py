@@ -345,11 +345,11 @@ def cmd_start(args):
         except requests.HTTPError as e:
             ui.err(f"#{task_id} — HTTP {e.response.status_code}")
 
-    # Fetch updated work items to get StateChangeDate from API
+    # Fetch updated work items to get ChangedDate from API
     try:
         updated_items = azdo.get_workitems(sess, cfg, selected_task_ids)
         task_state_dates = {
-            t["id"]: t.get("fields", {}).get("System.StateChangeDate")
+            t["id"]: t.get("fields", {}).get("System.ChangedDate")
             for t in updated_items
         }
     except requests.HTTPError:
