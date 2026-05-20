@@ -592,6 +592,87 @@ def cmd_end(args):
     ui.info(f"Tasks marked as '{close_state}'.")
 
 
+def cmd_hours(args):
+    """Show completed hours for closed tasks and stories."""
+    cfg = config.load_cfg()
+    config.require_cfg(cfg, "org", "project", "pat")
+    sess = azdo.session(cfg)
+
+    since = getattr(args, "since", None)
+    until = getattr(args, "until", None)
+
+    header = "Hours Report"
+    if since:
+        header += f"  (since: {since})"
+    if until:
+        header += f"  (until: {until})"
+    ui.hdr(header)
+
+    try:
+        stories = azdo.get_closed_stories(sess, cfg, since, until)
+    except requests.HTTPError as e:
+        ui.err(f"Azure DevOps error: {e.response.status_code}")
+        return
+
+    if not stories:
+        ui.warn("No closed stories found.")
+        return
+
+    total_story_hours = 0.0
+    total_task_hours = 0.0
+
+    for story in stories:
+        f = story.get("fields", {})
+        story_id = story["id"]
+        item_type = f.get("System.WorkItemType", "User Story")
+        title = f.get("System.Title", "")
+        story_hours = f.get("Microsoft.VSTS.Scheduling.CompletedWork") or 0.0
+        total_story_hours += story_hours
+
+        try:
+            all_children = azdo.get_task_children(
+                sess, cfg, story_id, active_only=False
+            )
+        except requests.HTTPError as e:
+            ui.warn(f"Failed to fetch tasks for #{story_id}: {e.response.status_code}")
+            all_children = []
+
+        closed_tasks = [
+            t
+            for t in all_children
+            if t.get("fields", {}).get("System.State") in azdo._DONE_STATES
+        ]
+
+        task_hours = sum(
+            (t.get("fields", {}).get("Microsoft.VSTS.Scheduling.CompletedWork") or 0.0)
+            for t in closed_tasks
+        )
+        total_task_hours += task_hours
+
+        print(f"\n  {ui.CY}[{item_type}] #{story_id}{ui.R}  {title}")
+        print(f"    Story hours: {story_hours:.1f}h  |  Task hours: {task_hours:.1f}h")
+
+        if not closed_tasks:
+            print(f"    {ui.DIM}(no hours logged on closed tasks){ui.R}")
+        else:
+            for t in closed_tasks:
+                tf = t.get("fields", {})
+                task_type = tf.get("System.WorkItemType", "Task")
+                task_title = tf.get("System.Title", "")
+                h = tf.get("Microsoft.VSTS.Scheduling.CompletedWork") or 0.0
+                print(
+                    f"    {ui.DIM}[{task_type}] #{t['id']}  {task_title}"
+                    f"  — {h:.1f}h{ui.R}"
+                )
+
+    print()
+    ui.sep()
+    ui.info(
+        f"Grand total — Story hours: {total_story_hours:.1f}h"
+        f"  |  Task hours: {total_task_hours:.1f}h"
+    )
+
+
 def cmd_status(args):
     """Show today's stories and tasks from Azure DevOps API."""
     from datetime import date
