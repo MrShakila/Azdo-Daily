@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-05-20
+
+### Added
+
+- **`azdo-daily hours` command** — Show completed hours for closed tasks and user stories, grouped per story with story hours and task hours displayed separately, plus a grand total. Supports `--since`/`--until` date filters (YYYY-MM-DD).
+- **Hours summary in `status`** — `azdo-daily status` now appends a one-line completed hours summary (all time) at the end of output.
+
 ## [1.6.6] - 2026-05-19
 
 ### Fixed
