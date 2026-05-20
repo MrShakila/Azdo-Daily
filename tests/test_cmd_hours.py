@@ -145,3 +145,48 @@ def test_cmd_hours_story_with_no_closed_tasks_shows_zero(mock_azdo, mock_cfg, ca
     combined = captured.out + captured.err
     assert "no hours logged on closed tasks" in combined
     assert "Task hours: 0.0h" in combined
+
+
+@patch("azdo_daily.commands.config")
+@patch("azdo_daily.commands.azdo")
+def test_cmd_hours_http_error_on_stories_shows_error(mock_azdo, mock_cfg, capsys):
+    import requests as req
+
+    mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
+    mock_cfg.require_cfg.return_value = None
+    mock_azdo.session.return_value = MagicMock()
+    err_resp = MagicMock()
+    err_resp.status_code = 401
+    mock_azdo.get_closed_stories.side_effect = req.HTTPError(response=err_resp)
+
+    cmd_hours(_args())
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    assert "401" in combined
+    # Should not print Grand total
+    assert "Grand total" not in combined
+
+
+@patch("azdo_daily.commands.config")
+@patch("azdo_daily.commands.azdo")
+def test_cmd_hours_http_error_on_tasks_warns_and_continues(mock_azdo, mock_cfg, capsys):
+    import requests as req
+
+    mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
+    mock_cfg.require_cfg.return_value = None
+    mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_closed_stories.return_value = [CLOSED_STORY]
+    mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
+    err_resp = MagicMock()
+    err_resp.status_code = 500
+    mock_azdo.get_task_children.side_effect = req.HTTPError(response=err_resp)
+
+    cmd_hours(_args())
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    # Should warn about failure
+    assert "Failed to fetch tasks" in combined or "500" in combined
+    # Should still show grand total (continues despite error)
+    assert "Grand total" in combined
