@@ -653,31 +653,26 @@ def cmd_hours(args):
             ui.warn(f"Failed to fetch tasks for #{story_id}: {e.response.status_code}")
             all_children = []
 
-        closed_tasks = [
-            t
-            for t in all_children
-            if t.get("fields", {}).get("System.State") in azdo._DONE_STATES
-        ]
-
         task_hours = sum(
             (t.get("fields", {}).get("Microsoft.VSTS.Scheduling.CompletedWork") or 0.0)
-            for t in closed_tasks
+            for t in all_children
         )
         total_task_hours += task_hours
 
         print(f"\n  {ui.CY}[{item_type}] #{story_id}{ui.R}  {title}")
         print(f"    Story hours: {story_hours:.1f}h  |  Task hours: {task_hours:.1f}h")
 
-        if not closed_tasks:
-            print(f"    {ui.DIM}(no hours logged on closed tasks){ui.R}")
+        if not all_children:
+            print(f"    {ui.DIM}(no tasks found){ui.R}")
         else:
-            for t in closed_tasks:
+            for t in all_children:
                 tf = t.get("fields", {})
                 task_type = tf.get("System.WorkItemType", "Task")
                 task_title = tf.get("System.Title", "")
+                task_state = tf.get("System.State", "")
                 h = tf.get("Microsoft.VSTS.Scheduling.CompletedWork") or 0.0
                 print(
-                    f"    {ui.DIM}[{task_type}] #{t['id']}  {task_title}"
+                    f"    {ui.DIM}[{task_type}] [{task_state}] #{t['id']}  {task_title}"
                     f"  — {h:.1f}h{ui.R}"
                 )
 
