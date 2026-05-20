@@ -610,6 +610,9 @@ def cmd_hours(args):
 
     try:
         stories = azdo.get_closed_stories(sess, cfg, since, until)
+    except ValueError as e:
+        ui.err(f"Configuration error: {e}")
+        return
     except requests.HTTPError as e:
         ui.err(f"Azure DevOps error: {e.response.status_code}")
         return

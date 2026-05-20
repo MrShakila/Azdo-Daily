@@ -358,3 +358,21 @@ def test_cmd_status_hours_shown_at_end_with_open_tasks(mock_azdo, mock_cfg, caps
     combined = captured.out + captured.err
     assert "Total:" in combined
     assert "Completed hours" in combined
+
+
+@patch("azdo_daily.commands.config")
+@patch("azdo_daily.commands.azdo")
+def test_cmd_hours_value_error_shows_config_error(mock_azdo, mock_cfg, capsys):
+    mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
+    mock_cfg.require_cfg.return_value = None
+    mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_closed_stories.side_effect = ValueError(
+        "Invalid project: contains forbidden character"
+    )
+
+    cmd_hours(_args())
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    assert "Configuration error" in combined
+    assert "Grand total" not in combined
