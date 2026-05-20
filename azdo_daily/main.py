@@ -11,6 +11,7 @@ Azure DevOps Daily Task Automation
 """
 
 import argparse
+from datetime import datetime
 
 from azdo_daily.commands import (
     cmd_clear_history,
@@ -19,12 +20,21 @@ from azdo_daily.commands import (
     cmd_doctor,
     cmd_end,
     cmd_help,
+    cmd_hours,
     cmd_nuke,
     cmd_reconfigure,
     cmd_start,
     cmd_status,
     cmd_update,
 )
+
+
+def _valid_date(s):
+    try:
+        datetime.strptime(s, "%Y-%m-%d")
+        return s
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Date must be YYYY-MM-DD, got: {s}")
 
 
 def main():
@@ -64,6 +74,22 @@ workflow:
     status_p = sub.add_parser("status", help="Show today's stories and tasks")
     status_p.add_argument("--date", help="Date for tasks (YYYY-MM-DD, default today)")
 
+    hours_p = sub.add_parser(
+        "hours", help="Show completed hours for closed tasks and stories"
+    )
+    hours_p.add_argument(
+        "--since",
+        type=_valid_date,
+        metavar="YYYY-MM-DD",
+        help="Filter by closed date >= YYYY-MM-DD",
+    )
+    hours_p.add_argument(
+        "--until",
+        type=_valid_date,
+        metavar="YYYY-MM-DD",
+        help="Filter by closed date <= YYYY-MM-DD",
+    )
+
     sub.add_parser("reconfigure", help="Reconfigure credentials and settings")
     sub.add_parser("clear-history", help="Clear daily state and task history")
     sub.add_parser("doctor", help="Check configuration and API connectivity")
@@ -78,6 +104,7 @@ workflow:
         "update": cmd_update,
         "end": cmd_end,
         "status": cmd_status,
+        "hours": cmd_hours,
         "reconfigure": cmd_reconfigure,
         "clear-history": cmd_clear_history,
         "doctor": cmd_doctor,

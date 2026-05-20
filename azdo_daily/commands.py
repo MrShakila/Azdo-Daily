@@ -916,6 +916,7 @@ def cmd_help(args):
         ("update", "Log progress hours/notes on tasks (keep open)"),
         ("end", "Mark tasks done → auto-resolve story if all done"),
         ("status", "Show today's stories and open tasks"),
+        ("hours", "Show completed hours for closed stories/tasks (--since/--until)"),
         ("reconfigure", "Update credentials and settings"),
         ("clear-history", "Clear all daily state files"),
         ("doctor", "Check config health and API connectivity"),
