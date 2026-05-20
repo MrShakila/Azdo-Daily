@@ -57,15 +57,14 @@ def test_get_closed_stories_since_appended_to_wiql():
     sess = _make_sess([], [])
     azdo.get_closed_stories(sess, CFG, since="2026-05-01")
     wiql_body = sess.post.call_args[1]["json"]["query"]
-    assert "2026-05-01" in wiql_body
-    assert "ClosedDate" in wiql_body
+    assert ">= '2026-05-01'" in wiql_body
 
 
 def test_get_closed_stories_until_appended_to_wiql():
     sess = _make_sess([], [])
     azdo.get_closed_stories(sess, CFG, until="2026-05-31")
     wiql_body = sess.post.call_args[1]["json"]["query"]
-    assert "2026-05-31" in wiql_body
+    assert "<= '2026-05-31'" in wiql_body
 
 
 def test_get_closed_stories_workitems_fields_include_completed_work():
@@ -80,3 +79,30 @@ def test_get_closed_stories_invalid_project_raises():
     bad_cfg = {**CFG, "project": "bad'project"}
     with pytest.raises(ValueError):
         azdo.get_closed_stories(sess, bad_cfg)
+
+
+def test_get_closed_stories_invalid_assignee_raises():
+    sess = _make_sess([], [])
+    bad_cfg = {**CFG, "assigned_to": "bad'user@example.com"}
+    with pytest.raises(ValueError):
+        azdo.get_closed_stories(sess, bad_cfg)
+
+
+def test_get_closed_stories_both_since_and_until():
+    sess = _make_sess([], [])
+    azdo.get_closed_stories(sess, CFG, since="2026-05-01", until="2026-05-31")
+    wiql_body = sess.post.call_args[1]["json"]["query"]
+    assert ">= '2026-05-01'" in wiql_body
+    assert "<= '2026-05-31'" in wiql_body
+
+
+def test_get_closed_stories_invalid_since_raises():
+    sess = _make_sess([], [])
+    with pytest.raises(ValueError):
+        azdo.get_closed_stories(sess, CFG, since="2026-05-01' OR '1'='1")
+
+
+def test_get_closed_stories_invalid_until_raises():
+    sess = _make_sess([], [])
+    with pytest.raises(ValueError):
+        azdo.get_closed_stories(sess, CFG, until="2026-05-31' OR '1'='1")

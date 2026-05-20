@@ -186,6 +186,10 @@ def get_closed_stories(
     assignee = cfg.get("assigned_to") or "@Me"
     if "'" in assignee:
         raise ValueError("Invalid assignee: contains forbidden character")
+    if since and "'" in since:
+        raise ValueError("Invalid since date: contains forbidden character")
+    if until and "'" in until:
+        raise ValueError("Invalid until date: contains forbidden character")
     if "@" not in assignee and assignee != "@Me":
         assignee_clause = f"[System.AssignedTo] contains '{assignee}'"
     else:
