@@ -49,12 +49,13 @@ def test_cmd_hours_no_closed_stories_warns(mock_azdo, mock_cfg, capsys):
     mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
     mock_cfg.require_cfg.return_value = None
     mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
     mock_azdo.get_closed_stories.return_value = []
 
     cmd_hours(_args())
 
     out = capsys.readouterr()
-    assert "No closed stories" in out.err or "No closed stories" in out.out
+    assert "No stories found" in out.err or "No stories found" in out.out
 
 
 @patch("azdo_daily.commands.config")
@@ -63,6 +64,7 @@ def test_cmd_hours_shows_story_and_task_hours(mock_azdo, mock_cfg, capsys):
     mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
     mock_cfg.require_cfg.return_value = None
     mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
     mock_azdo.get_closed_stories.return_value = [CLOSED_STORY]
     mock_azdo.get_task_children.return_value = [CLOSED_TASK]
     mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
@@ -82,6 +84,7 @@ def test_cmd_hours_null_task_hours_treated_as_zero(mock_azdo, mock_cfg, capsys):
     mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
     mock_cfg.require_cfg.return_value = None
     mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
     mock_azdo.get_closed_stories.return_value = [CLOSED_STORY]
     mock_azdo.get_task_children.return_value = [CLOSED_TASK_NO_HOURS]
     mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
@@ -116,6 +119,7 @@ def test_cmd_hours_grand_total_sums_all_stories(mock_azdo, mock_cfg, capsys):
     mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
     mock_cfg.require_cfg.return_value = None
     mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
     mock_azdo.get_closed_stories.return_value = [CLOSED_STORY, story_b]
     mock_azdo.get_task_children.side_effect = [[CLOSED_TASK], [task_b]]
     mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
@@ -135,6 +139,7 @@ def test_cmd_hours_story_with_no_closed_tasks_shows_zero(mock_azdo, mock_cfg, ca
     mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
     mock_cfg.require_cfg.return_value = None
     mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
     mock_azdo.get_closed_stories.return_value = [CLOSED_STORY]
     mock_azdo.get_task_children.return_value = []  # no children at all
     mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
@@ -155,6 +160,7 @@ def test_cmd_hours_http_error_on_stories_shows_error(mock_azdo, mock_cfg, capsys
     mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
     mock_cfg.require_cfg.return_value = None
     mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
     err_resp = MagicMock()
     err_resp.status_code = 401
     mock_azdo.get_closed_stories.side_effect = req.HTTPError(response=err_resp)
@@ -176,6 +182,7 @@ def test_cmd_hours_http_error_on_tasks_warns_and_continues(mock_azdo, mock_cfg, 
     mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
     mock_cfg.require_cfg.return_value = None
     mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
     mock_azdo.get_closed_stories.return_value = [CLOSED_STORY]
     mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
     err_resp = MagicMock()
@@ -366,6 +373,7 @@ def test_cmd_hours_value_error_shows_config_error(mock_azdo, mock_cfg, capsys):
     mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
     mock_cfg.require_cfg.return_value = None
     mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
     mock_azdo.get_closed_stories.side_effect = ValueError(
         "Invalid project: contains forbidden character"
     )

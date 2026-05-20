@@ -609,7 +609,13 @@ def cmd_hours(args):
     ui.hdr(header)
 
     try:
-        stories = azdo.get_closed_stories(sess, cfg, since, until)
+        active_stories = azdo.get_my_stories(sess, cfg)
+    except requests.HTTPError as e:
+        ui.err(f"Azure DevOps error: {e.response.status_code}")
+        return
+
+    try:
+        closed_stories = azdo.get_closed_stories(sess, cfg, since, until)
     except ValueError as e:
         ui.err(f"Configuration error: {e}")
         return
@@ -617,8 +623,15 @@ def cmd_hours(args):
         ui.err(f"Azure DevOps error: {e.response.status_code}")
         return
 
+    seen_ids = set()
+    stories = []
+    for s in active_stories + closed_stories:
+        if s["id"] not in seen_ids:
+            seen_ids.add(s["id"])
+            stories.append(s)
+
     if not stories:
-        ui.warn("No closed stories found.")
+        ui.warn("No stories found.")
         return
 
     total_story_hours = 0.0
