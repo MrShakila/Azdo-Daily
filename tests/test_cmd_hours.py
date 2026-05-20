@@ -249,3 +249,112 @@ def test_cmd_status_skips_hours_when_no_closed_stories(mock_azdo, mock_cfg, caps
     captured = capsys.readouterr()
     combined = captured.out + captured.err
     assert "Completed hours" not in combined
+
+
+@patch("azdo_daily.commands.config")
+@patch("azdo_daily.commands.azdo")
+def test_cmd_status_hours_shown_when_all_tasks_done(mock_azdo, mock_cfg, capsys):
+    mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
+    mock_cfg.require_cfg.return_value = None
+    mock_azdo.session.return_value = MagicMock()
+
+    mock_azdo.get_my_stories.return_value = [
+        {
+            "id": 1,
+            "fields": {
+                "System.Title": "Active Story",
+                "System.WorkItemType": "User Story",
+                "System.State": "Active",
+            },
+        }
+    ]
+    # active_only=False: 1 closed task (total count)
+    # active_only=True: no open tasks -> triggers "all tasks done" branch
+    # active_only=False for story 99 in _print_hours_summary
+    mock_azdo.get_task_children.side_effect = [
+        [
+            {
+                "id": 50,
+                "fields": {
+                    "System.Title": "Done task",
+                    "System.WorkItemType": "Task",
+                    "System.State": "Closed",
+                },
+            }
+        ],
+        [],
+        [],
+    ]
+
+    mock_azdo.get_closed_stories.return_value = [
+        {
+            "id": 99,
+            "fields": {
+                "System.Title": "Old Story",
+                "System.WorkItemType": "User Story",
+                "Microsoft.VSTS.Scheduling.CompletedWork": 2.0,
+            },
+        }
+    ]
+    mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
+
+    cmd_status(argparse.Namespace(date=None))
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    assert "All" in combined and "done" in combined
+    assert "Completed hours" in combined
+
+
+@patch("azdo_daily.commands.config")
+@patch("azdo_daily.commands.azdo")
+def test_cmd_status_hours_shown_at_end_with_open_tasks(mock_azdo, mock_cfg, capsys):
+    mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
+    mock_cfg.require_cfg.return_value = None
+    mock_azdo.session.return_value = MagicMock()
+
+    mock_azdo.get_my_stories.return_value = [
+        {
+            "id": 1,
+            "fields": {
+                "System.Title": "Active Story",
+                "System.WorkItemType": "User Story",
+                "System.State": "Active",
+            },
+        }
+    ]
+    open_task = {
+        "id": 51,
+        "fields": {
+            "System.Title": "Open task",
+            "System.WorkItemType": "Task",
+            "System.State": "Active",
+            "System.ChangedDate": None,
+        },
+    }
+    # calls: active_only=False for story 1, active_only=True for story 1,
+    # active_only=False for story 99 (in _print_hours_summary)
+    mock_azdo.get_task_children.side_effect = [
+        [open_task],
+        [open_task],
+        [],
+    ]
+
+    mock_azdo.get_closed_stories.return_value = [
+        {
+            "id": 99,
+            "fields": {
+                "System.Title": "Old Story",
+                "System.WorkItemType": "User Story",
+                "Microsoft.VSTS.Scheduling.CompletedWork": 3.0,
+            },
+        }
+    ]
+    mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
+
+    cmd_status(argparse.Namespace(date=None))
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    assert "Total:" in combined
+    assert "Completed hours" in combined
