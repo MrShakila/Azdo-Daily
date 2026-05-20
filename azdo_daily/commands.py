@@ -673,6 +673,40 @@ def cmd_hours(args):
     )
 
 
+def _print_hours_summary(sess, cfg):
+    """Fetch closed stories and print a one-line hours summary. Silent if none."""
+    try:
+        closed_stories = azdo.get_closed_stories(sess, cfg)
+    except requests.HTTPError:
+        return
+
+    if not closed_stories:
+        return
+
+    total_story_hours = 0.0
+    total_task_hours = 0.0
+    for story in closed_stories:
+        f = story.get("fields", {})
+        total_story_hours += f.get("Microsoft.VSTS.Scheduling.CompletedWork") or 0.0
+        try:
+            all_children = azdo.get_task_children(
+                sess, cfg, story["id"], active_only=False
+            )
+        except requests.HTTPError:
+            continue
+        for t in all_children:
+            if t.get("fields", {}).get("System.State") in azdo._DONE_STATES:
+                total_task_hours += (
+                    t.get("fields", {}).get("Microsoft.VSTS.Scheduling.CompletedWork")
+                    or 0.0
+                )
+
+    ui.info(
+        f"Completed hours (all time):  Story: {total_story_hours:.1f}h"
+        f"  |  Tasks: {total_task_hours:.1f}h"
+    )
+
+
 def cmd_status(args):
     """Show today's stories and tasks from Azure DevOps API."""
     from datetime import date
@@ -694,6 +728,7 @@ def cmd_status(args):
 
     if not stories:
         ui.warn("No active user stories assigned to you.")
+        _print_hours_summary(sess, cfg)
         return
 
     ui.info(f"Your stories ({len(stories)}):")
@@ -732,6 +767,7 @@ def cmd_status(args):
     if not open_tasks:
         done_c = total_task_count
         ui.ok(f"All {done_c} task(s) done for active stories.")
+        _print_hours_summary(sess, cfg)
         return
 
     all_tasks = open_tasks
@@ -757,6 +793,7 @@ def cmd_status(args):
     open_c = sum(1 for t in display_tasks if not t.get("closed"))
     print()
     ui.info(f"Total: {closed_c} resolved  /  {open_c} still open")
+    _print_hours_summary(sess, cfg)
 
 
 def cmd_clear_history(args):

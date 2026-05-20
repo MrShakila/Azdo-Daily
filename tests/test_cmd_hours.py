@@ -3,7 +3,7 @@
 import argparse
 from unittest.mock import MagicMock, patch
 
-from azdo_daily.commands import cmd_hours
+from azdo_daily.commands import cmd_hours, cmd_status
 
 
 def _args(since=None, until=None):
@@ -190,3 +190,62 @@ def test_cmd_hours_http_error_on_tasks_warns_and_continues(mock_azdo, mock_cfg, 
     assert "Failed to fetch tasks" in combined or "500" in combined
     # Should still show grand total (continues despite error)
     assert "Grand total" in combined
+
+
+@patch("azdo_daily.commands.config")
+@patch("azdo_daily.commands.azdo")
+def test_cmd_status_appends_hours_summary(mock_azdo, mock_cfg, capsys):
+    mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
+    mock_cfg.require_cfg.return_value = None
+    mock_azdo.session.return_value = MagicMock()
+
+    # Active stories (for main status display)
+    mock_azdo.get_my_stories.return_value = []
+
+    # Closed stories (for hours summary)
+    mock_azdo.get_closed_stories.return_value = [
+        {
+            "id": 10,
+            "fields": {
+                "System.Title": "Story A",
+                "System.WorkItemType": "User Story",
+                "Microsoft.VSTS.Scheduling.CompletedWork": 1.5,
+            },
+        }
+    ]
+    mock_azdo.get_task_children.return_value = [
+        {
+            "id": 100,
+            "fields": {
+                "System.Title": "Task one",
+                "System.WorkItemType": "Task",
+                "System.State": "Closed",
+                "Microsoft.VSTS.Scheduling.CompletedWork": 4.0,
+            },
+        }
+    ]
+    mock_azdo._DONE_STATES = ("Closed", "Resolved", "Removed")
+
+    cmd_status(argparse.Namespace(date=None))
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    assert "Completed hours" in combined
+    assert "Story: 1.5h" in combined
+    assert "Tasks: 4.0h" in combined
+
+
+@patch("azdo_daily.commands.config")
+@patch("azdo_daily.commands.azdo")
+def test_cmd_status_skips_hours_when_no_closed_stories(mock_azdo, mock_cfg, capsys):
+    mock_cfg.load_cfg.return_value = {"org": "o", "project": "p", "pat": "t"}
+    mock_cfg.require_cfg.return_value = None
+    mock_azdo.session.return_value = MagicMock()
+    mock_azdo.get_my_stories.return_value = []
+    mock_azdo.get_closed_stories.return_value = []
+
+    cmd_status(argparse.Namespace(date=None))
+
+    captured = capsys.readouterr()
+    combined = captured.out + captured.err
+    assert "Completed hours" not in combined
