@@ -173,6 +173,69 @@ def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
     return r2.json().get("value", [])
 
 
+def get_closed_stories(
+    sess: requests.Session,
+    cfg: dict,
+    since: Optional[str] = None,
+    until: Optional[str] = None,
+) -> list[dict]:
+    """WIQL query: closed work items assigned to me, with optional ClosedDate filter."""
+    project = cfg.get("project", "")
+    if "'" in project:
+        raise ValueError("Invalid project: contains forbidden character")
+    assignee = cfg.get("assigned_to") or "@Me"
+    if "'" in assignee:
+        raise ValueError("Invalid assignee: contains forbidden character")
+    if "@" not in assignee and assignee != "@Me":
+        assignee_clause = f"[System.AssignedTo] contains '{assignee}'"
+    else:
+        assignee_clause = (
+            "[System.AssignedTo] = @Me"
+            if assignee == "@Me"
+            else f"[System.AssignedTo] = '{assignee}'"
+        )
+
+    types = "'Epic','Feature','User Story','Story','Bug','Issue'"
+    date_clauses = ""
+    if since:
+        date_clauses += f"\n  AND  [Microsoft.VSTS.Common.ClosedDate] >= '{since}'"
+    if until:
+        date_clauses += f"\n  AND  [Microsoft.VSTS.Common.ClosedDate] <= '{until}'"
+
+    wiql = {
+        "query": f"""
+            SELECT [System.Id],[System.Title],[System.State],
+                   [System.WorkItemType],[Microsoft.VSTS.Common.ClosedDate]
+            FROM   WorkItems
+            WHERE  [System.TeamProject] = '{cfg['project']}'
+              AND  [System.WorkItemType] IN ({types})
+              AND  {assignee_clause}
+              AND  [System.State] = 'Closed'{date_clauses}
+            ORDER BY [Microsoft.VSTS.Common.ClosedDate] DESC
+        """
+    }
+    base = wit_base(cfg)
+    r = sess.post(
+        f"{base}/wiql?api-version=7.1",
+        json=wiql,
+        headers={"Content-Type": "application/json"},
+    )
+    r.raise_for_status()
+    ids = [str(w["id"]) for w in r.json().get("workItems", [])]
+    if not ids:
+        return []
+    r2 = sess.get(
+        f"{base}/workitems?ids={','.join(ids)}"
+        "&fields=System.Id,System.Title,System.State,System.WorkItemType,"
+        "Microsoft.VSTS.Common.ClosedDate,"
+        "Microsoft.VSTS.Scheduling.CompletedWork"
+        "&api-version=7.1",
+        headers={"Content-Type": "application/json"},
+    )
+    r2.raise_for_status()
+    return r2.json().get("value", [])
+
+
 def create_task(
     sess: requests.Session, cfg: dict, task: dict, parent_ids: list[int]
 ) -> dict:
