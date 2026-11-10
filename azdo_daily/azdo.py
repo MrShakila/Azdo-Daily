@@ -121,11 +121,8 @@ def get_task_children(
     return all_items
 
 
-def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
-    """WIQL query: active work items (Epic/Feature/Story/Bug/Issue) assigned to me."""
-    project = cfg.get("project", "")
-    if "'" in project:
-        raise ValueError("Invalid project: contains forbidden character")
+def _assignee_clause(cfg: dict) -> str:
+    """WIQL clause matching the configured assignee."""
     assignee = cfg.get("assigned_to") or "@Me"
     if "'" in assignee:
         raise ValueError("Invalid assignee: contains forbidden character")
@@ -137,6 +134,15 @@ def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
             if assignee == "@Me"
             else f"[System.AssignedTo] = '{assignee}'"
         )
+    return assignee_clause
+
+
+def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
+    """WIQL query: active work items (Epic/Feature/Story/Bug/Issue) assigned to me."""
+    project = cfg.get("project", "")
+    if "'" in project:
+        raise ValueError("Invalid project: contains forbidden character")
+    assignee_clause = _assignee_clause(cfg)
 
     types = "'Epic','Feature','User Story','Story','Bug','Issue'"
     wiql = {
@@ -173,6 +179,97 @@ def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
     )
     r2.raise_for_status()
     return r2.json().get("value", [])
+
+
+IN_PROGRESS = ("InProgress",)
+RESOLVED = ("Resolved", "Completed")
+
+
+def get_my_bugs(sess: requests.Session, cfg: dict) -> list[dict]:
+    """WIQL query: open bugs assigned to me, highest priority first."""
+    project = cfg.get("project", "")
+    if "'" in project:
+        raise ValueError("Invalid project: contains forbidden character")
+    wiql = {
+        "query": f"""
+            SELECT [System.Id]
+            FROM   WorkItems
+            WHERE  [System.TeamProject] = '{project}'
+              AND  [System.WorkItemType] = 'Bug'
+              AND  {_assignee_clause(cfg)}
+              AND  [System.State] NOT IN ('Closed','Removed')
+            ORDER BY [Microsoft.VSTS.Common.Priority] ASC,
+                     [System.ChangedDate]              DESC
+        """
+    }
+    base = wit_base(cfg)
+    r = sess.post(
+        f"{base}/wiql?api-version=7.1",
+        json=wiql,
+        headers={"Content-Type": "application/json"},
+    )
+    r.raise_for_status()
+    ids = [str(w["id"]) for w in r.json().get("workItems", [])]
+    if not ids:
+        return []
+    r2 = sess.get(
+        f"{base}/workitems?ids={','.join(ids)}"
+        "&fields=System.Id,System.Title,System.State,"
+        "Microsoft.VSTS.Common.Priority,Microsoft.VSTS.Common.Severity"
+        "&api-version=7.1",
+        headers={"Content-Type": "application/json"},
+    )
+    r2.raise_for_status()
+    return r2.json().get("value", [])
+
+
+def get_bug(sess: requests.Session, cfg: dict, bug_id: int) -> dict:
+    """Bug details: fields, repro steps, comments and attachment links."""
+    base = wit_base(cfg)
+    r = sess.get(f"{base}/workitems/{bug_id}?$expand=relations&api-version=7.1")
+    r.raise_for_status()
+    item = r.json()
+    fields = item.get("fields", {})
+    rc = sess.get(f"{base}/workitems/{bug_id}/comments?api-version=7.1-preview.3")
+    rc.raise_for_status()
+    comments = [
+        {
+            "author": (c.get("createdBy") or {}).get("displayName", ""),
+            "text": c.get("text", ""),
+        }
+        for c in rc.json().get("comments", [])
+    ]
+    return {
+        "id": item.get("id", bug_id),
+        "title": fields.get("System.Title", ""),
+        "state": fields.get("System.State", ""),
+        "severity": fields.get("Microsoft.VSTS.Common.Severity", ""),
+        "repro_steps": fields.get("Microsoft.VSTS.TCM.ReproSteps", ""),
+        "comments": comments,
+        "attachments": [
+            rel["url"]
+            for rel in item.get("relations", [])
+            if rel.get("rel") == "AttachedFile"
+        ],
+    }
+
+
+def pick_state(
+    sess: requests.Session, cfg: dict, work_item_type: str, categories: tuple
+) -> str:
+    """First state of the work item type whose category is in categories."""
+    base = wit_base(cfg)
+    type_name = requests.utils.quote(work_item_type, safe="")
+    r = sess.get(f"{base}/workitemtypes/{type_name}/states?api-version=7.1")
+    r.raise_for_status()
+    states = r.json().get("value", [])
+    for st in states:
+        if st.get("category") in categories:
+            return st["name"]
+    names = ", ".join(st["name"] for st in states)
+    raise ValueError(
+        f"No {categories} state for {work_item_type}; available: {names}"
+    )
 
 
 def get_closed_stories(
