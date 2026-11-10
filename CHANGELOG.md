@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-11-10
+
+### Added
+
+- **Bug commands** — `bugs`, `bug show`, `bug start`, `bug resolve` with `--json`; state names come from the work item type's state categories
+- **Pull request commands** — `pr create --bugs`, `pr comments`, `pr reply --resolve` for Azure Repos
+- **Config keys** — `repo` and `target_branch`
+
+### Changed
+
+- `configure` now creates a `.gitignore` entry for `.config/` in a git repo even when no `.gitignore` exists
+
 ## [1.7.3] - 2026-05-20
 
 ### Fixed
