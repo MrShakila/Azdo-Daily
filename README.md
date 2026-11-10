@@ -228,6 +228,24 @@ Each day's data in `state/YYYY-MM-DD.json`:
 
 ---
 
+## Bugs and pull requests
+
+List the bugs assigned to you, move them through their states, and open one PR with all the fixes. Every command takes `--json` for scripts and agents. Run them from the project folder: config is per project (`.config/settings.json`) and also needs the `repo` and `target_branch` keys (`azdo-daily configure` asks for them). The PAT needs Work Items and Code read/write scopes.
+
+```bash
+azdo-daily bugs                                   # open bugs assigned to you
+azdo-daily bug show 123                           # repro steps, comments, attachments
+azdo-daily bug start 123                          # move to the in-progress state
+azdo-daily bug resolve 123 --comment "Fixed null check"
+azdo-daily pr create --bugs 123,124 --title "Fix QA bugs"
+azdo-daily pr comments 45                         # active review threads
+azdo-daily pr reply 45 7 --text "Done" --resolve  # reply and mark thread fixed
+```
+
+State names are read from the project's Bug work item type by category, so Agile and Scrum templates both work. `pr create` refuses to run on the target branch or on a branch that is not on `origin`.
+
+---
+
 ## Cron (optional)
 
 Status reminder at 9 AM weekdays:
