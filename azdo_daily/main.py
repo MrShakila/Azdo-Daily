@@ -13,6 +13,7 @@ Azure DevOps Daily Task Automation
 import argparse
 from datetime import datetime
 
+from azdo_daily.bugs import cmd_bug_resolve, cmd_bug_show, cmd_bug_start, cmd_bugs
 from azdo_daily.commands import (
     cmd_clear_history,
     cmd_configure,
@@ -90,6 +91,22 @@ workflow:
         help="Filter by closed date <= YYYY-MM-DD",
     )
 
+    bugs_p = sub.add_parser("bugs", help="List open bugs assigned to you")
+    bugs_p.add_argument("--json", action="store_true", help="Print JSON")
+
+    bug_p = sub.add_parser("bug", help="Show, start or resolve one bug")
+    bug_sub = bug_p.add_subparsers(dest="bug_cmd", required=True)
+    for name, hlp in (
+        ("show", "Show a bug with repro steps and comments"),
+        ("start", "Move a bug to its in-progress state"),
+        ("resolve", "Comment on a bug and move it to its resolved state"),
+    ):
+        bp = bug_sub.add_parser(name, help=hlp)
+        bp.add_argument("id", type=int, help="Bug work item id")
+        bp.add_argument("--json", action="store_true", help="Print JSON")
+        if name == "resolve":
+            bp.add_argument("--comment", required=True, help="Resolution comment")
+
     sub.add_parser("reconfigure", help="Reconfigure credentials and settings")
     sub.add_parser("clear-history", help="Clear daily state and task history")
     sub.add_parser("doctor", help="Check configuration and API connectivity")
@@ -97,6 +114,11 @@ workflow:
     sub.add_parser("help", help="Show all available commands")
 
     args = ap.parse_args()
+    if args.cmd == "bug":
+        {"show": cmd_bug_show, "start": cmd_bug_start, "resolve": cmd_bug_resolve}[
+            args.bug_cmd
+        ](args)
+        return
     {
         "configure": cmd_configure,
         "create": cmd_create,
@@ -105,6 +127,7 @@ workflow:
         "end": cmd_end,
         "status": cmd_status,
         "hours": cmd_hours,
+        "bugs": cmd_bugs,
         "reconfigure": cmd_reconfigure,
         "clear-history": cmd_clear_history,
         "doctor": cmd_doctor,
