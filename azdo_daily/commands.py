@@ -51,6 +51,8 @@ def cmd_configure(args):
         ("anthropic_api_key", "Anthropic API key (for AI breakdown)"),
         ("assigned_to", "Your email / display name (for story filter)"),
         ("area_path", "Default area path (optional)"),
+        ("repo", "Azure Repos repository name"),
+        ("target_branch", "PR target branch (default main)"),
     ]
     for key, label in fields:
         current = cfg.get(key, "")
