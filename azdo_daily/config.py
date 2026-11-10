@@ -16,6 +16,8 @@ DEFAULT_CFG = {
     "anthropic_api_key": "",
     "assigned_to": "",
     "area_path": "",
+    "repo": "",
+    "target_branch": "main",
     "task_templates": [
         {"title": "UI", "priority": 2, "effort": None},
         {"title": "Logic", "priority": 2, "effort": None},
@@ -41,13 +43,14 @@ def save_cfg(cfg: dict):
 
 
 def _ensure_gitignore():
-    """Add .config/ to .gitignore if git repo exists."""
-    git_root = Path.cwd() / ".gitignore"
-    if not git_root.exists():
+    """Make sure .config/ is ignored when the current folder is a git repo."""
+    cwd = Path.cwd()
+    if not (cwd / ".git").exists():
         return
-    content = git_root.read_text()
+    ignore = cwd / ".gitignore"
+    content = ignore.read_text() if ignore.exists() else ""
     if ".config/" not in content:
-        git_root.write_text(content.rstrip() + "\n.config/\n")
+        ignore.write_text((content.rstrip() + "\n" if content else "") + ".config/\n")
 
 
 def require_cfg(cfg: dict, *keys: str):
