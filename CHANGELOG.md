@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-11-11
+
+### Fixed
+
+- **PyPI publish workflow** — build on Python 3.12; the pinned 3.9 is no longer available on `ubuntu-latest`, so 1.8.0 was never published. 1.8.1 contains the 1.8.0 changes.
+
 ## [1.8.0] - 2026-11-10
 
 ### Added
