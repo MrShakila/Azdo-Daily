@@ -268,9 +268,7 @@ def pick_state(
         if st.get("category") in categories:
             return st["name"]
     names = ", ".join(st["name"] for st in states)
-    raise ValueError(
-        f"No {categories} state for {work_item_type}; available: {names}"
-    )
+    raise ValueError(f"No {categories} state for {work_item_type}; available: {names}")
 
 
 def get_closed_stories(
