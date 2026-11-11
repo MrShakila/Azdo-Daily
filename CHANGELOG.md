@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Bug commands** — `bugs`, `bug show`, `bug start`, `bug resolve` with `--json`; state names come from the work item type's state categories
+- **Child tasks for bugs** — `bug task ID --title T` creates a child Task; `bug resolve ID --comment C --task TID` closes it and resolves the bug
 - **Pull request commands** — `pr create --bugs`, `pr comments`, `pr reply --resolve` for Azure Repos
 - **Config keys** — `repo` and `target_branch`
 

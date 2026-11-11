@@ -13,7 +13,13 @@ Azure DevOps Daily Task Automation
 import argparse
 from datetime import datetime
 
-from azdo_daily.bugs import cmd_bug_resolve, cmd_bug_show, cmd_bug_start, cmd_bugs
+from azdo_daily.bugs import (
+    cmd_bug_resolve,
+    cmd_bug_show,
+    cmd_bug_start,
+    cmd_bug_task,
+    cmd_bugs,
+)
 from azdo_daily.prs import cmd_pr_comments, cmd_pr_create, cmd_pr_reply
 from azdo_daily.commands import (
     cmd_clear_history,
@@ -101,12 +107,16 @@ workflow:
         ("show", "Show a bug with repro steps and comments"),
         ("start", "Move a bug to its in-progress state"),
         ("resolve", "Comment on a bug and move it to its resolved state"),
+        ("task", "Create a child Task under a bug"),
     ):
         bp = bug_sub.add_parser(name, help=hlp)
         bp.add_argument("id", type=int, help="Bug work item id")
         bp.add_argument("--json", action="store_true", help="Print JSON")
         if name == "resolve":
             bp.add_argument("--comment", required=True, help="Resolution comment")
+            bp.add_argument("--task", type=int, help="Child task id to close too")
+        if name == "task":
+            bp.add_argument("--title", required=True, help="Task title")
 
     pr_p = sub.add_parser("pr", help="Create a PR, list comments, reply to threads")
     pr_sub = pr_p.add_subparsers(dest="pr_cmd", required=True)
@@ -136,9 +146,12 @@ workflow:
         ](args)
         return
     if args.cmd == "bug":
-        {"show": cmd_bug_show, "start": cmd_bug_start, "resolve": cmd_bug_resolve}[
-            args.bug_cmd
-        ](args)
+        {
+            "show": cmd_bug_show,
+            "start": cmd_bug_start,
+            "resolve": cmd_bug_resolve,
+            "task": cmd_bug_task,
+        }[args.bug_cmd](args)
         return
     {
         "configure": cmd_configure,
