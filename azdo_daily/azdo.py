@@ -183,6 +183,7 @@ def get_my_stories(sess: requests.Session, cfg: dict) -> list[dict]:
 
 IN_PROGRESS = ("InProgress",)
 RESOLVED = ("Resolved", "Completed")
+COMPLETED = ("Completed",)
 
 
 def get_my_bugs(sess: requests.Session, cfg: dict) -> list[dict]:

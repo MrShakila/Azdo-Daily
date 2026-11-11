@@ -78,22 +78,27 @@ def cmd_bug_show(args):
     _emit(bug, args.json, human)
 
 
-def _move(args, categories, comment=None):
+def _move(args, categories, comment=None, task=None):
     sess, cfg = _session()
 
     def run():
+        # Look up both states first so a failure changes nothing.
+        task_state = (
+            azdo.pick_state(sess, cfg, "Task", azdo.COMPLETED) if task else None
+        )
         state = azdo.pick_state(sess, cfg, "Bug", categories)
+        if task:
+            azdo.set_workitem_state(sess, cfg, task, task_state)
         if comment:
             azdo.add_comment(sess, cfg, args.id, comment)
         azdo.set_workitem_state(sess, cfg, args.id, state)
-        return state
+        return state, task_state
 
-    state = _guard(run)
-    _emit(
-        {"id": args.id, "state": state},
-        args.json,
-        lambda: ui.ok(f"[Bug] #{args.id} → {state}"),
-    )
+    state, task_state = _guard(run)
+    result = {"id": args.id, "state": state}
+    if task:
+        result.update({"task": task, "task_state": task_state})
+    _emit(result, args.json, lambda: ui.ok(f"[Bug] #{args.id} → {state}"))
 
 
 def cmd_bug_start(args):
@@ -102,5 +107,16 @@ def cmd_bug_start(args):
 
 
 def cmd_bug_resolve(args):
-    """Comment on a bug and move it to its resolved state."""
-    _move(args, azdo.RESOLVED, args.comment)
+    """Comment on a bug and move it to its resolved state, closing its task."""
+    _move(args, azdo.RESOLVED, args.comment, getattr(args, "task", None))
+
+
+def cmd_bug_task(args):
+    """Create a child Task under a bug."""
+    sess, cfg = _session()
+    item = _guard(lambda: azdo.create_task(sess, cfg, {"title": args.title}, [args.id]))
+    _emit(
+        {"id": item["id"], "bug": args.id},
+        args.json,
+        lambda: ui.ok(f"[Task] #{item['id']} under [Bug] #{args.id}"),
+    )
