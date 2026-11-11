@@ -236,7 +236,8 @@ List the bugs assigned to you, move them through their states, and open one PR w
 azdo-daily bugs                                   # open bugs assigned to you
 azdo-daily bug show 123                           # repro steps, comments, attachments
 azdo-daily bug start 123                          # move to the in-progress state
-azdo-daily bug resolve 123 --comment "Fixed null check"
+azdo-daily bug task 123 --title "Fix null check"   # child Task under the bug
+azdo-daily bug resolve 123 --comment "Fixed null check" --task 456  # closes task 456, resolves bug
 azdo-daily pr create --bugs 123,124 --title "Fix QA bugs"
 azdo-daily pr comments 45                         # active review threads
 azdo-daily pr reply 45 7 --text "Done" --resolve  # reply and mark thread fixed
