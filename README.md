@@ -239,11 +239,12 @@ azdo-daily bug start 123                          # move to the in-progress stat
 azdo-daily bug task 123 --title "Fix null check"   # child Task under the bug
 azdo-daily bug resolve 123 --comment "Fixed null check" --task 456  # closes task 456, resolves bug
 azdo-daily pr create --bugs 123,124 --title "Fix QA bugs"
+azdo-daily pr create --title "Add setup" --description "What and why" --target master  # no bugs needed
 azdo-daily pr comments 45                         # active review threads
 azdo-daily pr reply 45 7 --text "Done" --resolve  # reply and mark thread fixed
 ```
 
-State names are read from the project's Bug work item type by category, so Agile and Scrum templates both work. `pr create` refuses to run on the target branch or on a branch that is not on `origin`.
+State names are read from the project's Bug work item type by category, so Agile and Scrum templates both work. `pr create` opens the PR from the current branch. `--bugs` (links the bugs), `--description` and `--target` (default: `target_branch` from the config, then `main`) are optional. It refuses to run on the target branch or on a branch that is not on `origin`.
 
 ---
 

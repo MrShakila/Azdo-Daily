@@ -22,14 +22,15 @@ def create_pr(
     description: str,
     bug_ids: list,
 ) -> dict:
-    """Open a PR from source to target linking the bug work items."""
+    """Open a PR from source to target, linking the bug work items if any."""
     body = {
         "sourceRefName": f"refs/heads/{source}",
         "targetRefName": f"refs/heads/{target}",
         "title": title,
         "description": description,
-        "workItemRefs": [{"id": str(i)} for i in bug_ids],
     }
+    if bug_ids:
+        body["workItemRefs"] = [{"id": str(i)} for i in bug_ids]
     r = sess.post(
         f"{repo_base(cfg)}/pullrequests?api-version=7.1",
         json=body,

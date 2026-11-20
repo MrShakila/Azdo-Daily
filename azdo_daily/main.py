@@ -120,9 +120,11 @@ workflow:
 
     pr_p = sub.add_parser("pr", help="Create a PR, list comments, reply to threads")
     pr_sub = pr_p.add_subparsers(dest="pr_cmd", required=True)
-    pc = pr_sub.add_parser("create", help="Open one PR linking the bugs")
-    pc.add_argument("--bugs", required=True, help="Bug ids, e.g. 1,2,3")
+    pc = pr_sub.add_parser("create", help="Open a PR from the current branch")
+    pc.add_argument("--bugs", help="Bug ids to link, e.g. 1,2,3 (optional)")
     pc.add_argument("--title", required=True, help="PR title")
+    pc.add_argument("--description", help="PR description (optional)")
+    pc.add_argument("--target", help="Target branch (default: config or main)")
     pm = pr_sub.add_parser("comments", help="List active review threads")
     pm.add_argument("pr", type=int, help="PR id")
     pp = pr_sub.add_parser("reply", help="Reply to a thread")

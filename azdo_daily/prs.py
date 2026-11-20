@@ -44,10 +44,10 @@ def _parse_ids(raw: str) -> list:
 
 
 def cmd_pr_create(args):
-    """Open one PR for the current branch, linking the bugs."""
+    """Open one PR for the current branch, linking the bugs when given."""
     sess, cfg = _session()
-    ids = _parse_ids(args.bugs)
-    target = cfg.get("target_branch") or "main"
+    ids = _parse_ids(args.bugs) if args.bugs else []
+    target = args.target or cfg.get("target_branch") or "main"
     branch = current_branch()
     if branch == target:
         _fail(f"Current branch is the target branch ({target}); use a fix branch.")
@@ -55,8 +55,11 @@ def cmd_pr_create(args):
         _fail(f"Branch {branch} is not on origin; push it first.")
 
     def run():
-        lines = [f"- #{i} {azdo.get_bug(sess, cfg, i)['title']}" for i in ids]
-        description = "Fixes:\n" + "\n".join(lines)
+        parts = [args.description] if args.description else []
+        if ids:
+            lines = [f"- #{i} {azdo.get_bug(sess, cfg, i)['title']}" for i in ids]
+            parts.append("Fixes:\n" + "\n".join(lines))
+        description = "\n\n".join(parts)
         return git_api.create_pr(
             sess, cfg, branch, target, args.title, description, ids
         )

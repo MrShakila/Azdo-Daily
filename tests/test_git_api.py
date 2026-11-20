@@ -40,6 +40,15 @@ def test_create_pr_payload_refs_and_work_items():
     assert pr["url"].endswith("/_git/myrepo/pullrequest/12")
 
 
+def test_create_pr_without_bugs_sends_no_work_item_refs():
+    sess = MagicMock()
+    sess.post.return_value = _resp({"pullRequestId": 13})
+    git.create_pr(sess, CFG, "feature/x", "master", "Add setup", "", [])
+    body = sess.post.call_args.kwargs["json"]
+    assert "workItemRefs" not in body
+    assert body["targetRefName"] == "refs/heads/master"
+
+
 def _thread(tid, status="active", comments=None, context=None):
     t = {"id": tid, "status": status, "comments": comments or []}
     if context:

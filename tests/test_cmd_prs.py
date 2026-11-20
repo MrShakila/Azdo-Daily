@@ -10,7 +10,8 @@ from azdo_daily.prs import cmd_pr_comments, cmd_pr_create, cmd_pr_reply
 
 
 def _args(**kw):
-    return argparse.Namespace(**{"json": True, **kw})
+    base = {"json": True, "bugs": None, "description": None, "target": None}
+    return argparse.Namespace(**{**base, **kw})
 
 
 def _cfg(mock_cfg, target="main"):
@@ -80,6 +81,43 @@ def test_pr_create_non_numeric_bug_id_exits_1(prs, capsys):
         cmd_pr_create(_args(bugs="1,abc", title="T"))
     assert exc.value.code == 1
     assert "abc" in capsys.readouterr().err
+    prs.api.create_pr.assert_not_called()
+
+
+def test_pr_create_without_bugs_uses_description(prs, capsys):
+    prs.api.create_pr.return_value = {"id": 13, "url": "https://x/13"}
+    cmd_pr_create(_args(title="Add setup", description="What and why"))
+    args = prs.api.create_pr.call_args.args
+    assert args[2:6] == ("bugfix/x", "main", "Add setup", "What and why")
+    assert args[6] == []
+    prs.azdo.get_bug.assert_not_called()
+    assert json.loads(capsys.readouterr().out)["id"] == 13
+
+
+def test_pr_create_without_bugs_or_description_has_empty_description(prs):
+    prs.api.create_pr.return_value = {"id": 1, "url": "u"}
+    cmd_pr_create(_args(title="T"))
+    assert prs.api.create_pr.call_args.args[5] == ""
+
+
+def test_pr_create_description_comes_before_bug_list(prs):
+    prs.api.create_pr.return_value = {"id": 1, "url": "u"}
+    cmd_pr_create(_args(bugs="1", title="T", description="Intro"))
+    text = prs.api.create_pr.call_args.args[5]
+    assert text.startswith("Intro\n\n") and "#1 Bug 1" in text
+
+
+def test_pr_create_target_flag_overrides_config(prs):
+    prs.api.create_pr.return_value = {"id": 1, "url": "u"}
+    cmd_pr_create(_args(title="T", target="master"))
+    assert prs.api.create_pr.call_args.args[3] == "master"
+
+
+def test_pr_create_target_flag_is_refused_on_that_branch(prs, capsys):
+    prs.branch.return_value = "master"
+    with pytest.raises(SystemExit) as exc:
+        cmd_pr_create(_args(title="T", target="master"))
+    assert exc.value.code == 1
     prs.api.create_pr.assert_not_called()
 
 

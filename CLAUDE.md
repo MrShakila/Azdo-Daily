@@ -32,7 +32,7 @@ azdo_daily/
 | `azdo-daily end` | `cmd_end` | Close tasks, auto-resolve story if all done |
 | `azdo-daily status` | `cmd_status` | Show stories + open tasks with states |
 | `azdo-daily bugs` / `bug show\|start\|resolve` | `bugs.py` | List and move bugs assigned to me (`--json`) |
-| `azdo-daily pr create\|comments\|reply` | `prs.py` | One PR for the fixes, read and answer review threads (`--json`) |
+| `azdo-daily pr create\|comments\|reply` | `prs.py` | PR from the current branch (bugs, `--description`, `--target` optional), read and answer review threads (`--json`) |
 | `azdo-daily doctor` | `cmd_doctor` | Check config health and API connectivity |
 | `azdo-daily nuke` | `cmd_nuke` | Delete all config and state (destructive) |
 | `azdo-daily help` | `cmd_help` | Show all available commands |
